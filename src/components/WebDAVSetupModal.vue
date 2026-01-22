@@ -383,6 +383,7 @@ async function startNextcloudAuth() {
       }
     )
   } catch (err) {
+    console.error('Nextcloud auth error:', err)
     error.value = err.message || 'Fehler beim Starten der Anmeldung'
 
     // If CORS error, stay on step 2 to show manual option
