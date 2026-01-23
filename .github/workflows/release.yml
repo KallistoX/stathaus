@@ -41,10 +41,26 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   build-and-push:
-    name: Build and Push Docker Images
+    name: Build ${{ matrix.component }} (${{ matrix.platform }})
     needs: release
     if: needs.release.outputs.new_release_published == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - component: frontend
+            platform: linux/amd64
+            runner: ubuntu-latest
+          - component: frontend
+            platform: linux/arm64
+            runner: ubuntu-24.04-arm
+          - component: backend
+            platform: linux/amd64
+            runner: ubuntu-latest
+          - component: backend
+            platform: linux/arm64
+            runner: ubuntu-24.04-arm
 
     env:
       REGISTRY: ghcr.io
@@ -59,11 +75,14 @@ jobs:
       - name: Pull latest changes (version bump commit)
         run: git pull origin main
 
-      - name: Set image names to lowercase
-        id: image-names
+      - name: Set image name to lowercase
+        id: image-name
         run: |
-          echo "frontend=${{ env.REGISTRY }}/${{ github.repository }}" | tr '[:upper:]' '[:lower:]' >> $GITHUB_OUTPUT
-          echo "backend=${{ env.REGISTRY }}/${{ github.repository }}-backend" | tr '[:upper:]' '[:lower:]' >> $GITHUB_OUTPUT
+          SUFFIX=""
+          if [ "${{ matrix.component }}" = "backend" ]; then
+            SUFFIX="-backend"
+          fi
+          echo "image=${{ env.REGISTRY }}/${{ github.repository }}${SUFFIX}" | tr '[:upper:]' '[:lower:]' >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -75,31 +94,70 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and push frontend Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            ${{ steps.image-names.outputs.frontend }}:${{ needs.release.outputs.new_release_version }}
-            ${{ steps.image-names.outputs.frontend }}:latest
-          cache-from: type=gha,scope=frontend
-          cache-to: type=gha,mode=max,scope=frontend
+      - name: Extract platform arch
+        id: platform
+        run: echo "arch=$(echo ${{ matrix.platform }} | cut -d'/' -f2)" >> $GITHUB_OUTPUT
 
-      - name: Build and push backend Docker image
+      - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./backend
-          file: ./backend/Dockerfile
-          platforms: linux/amd64,linux/arm64
+          context: ${{ matrix.component == 'backend' && './backend' || '.' }}
+          file: ${{ matrix.component == 'backend' && './backend/Dockerfile' || './Dockerfile' }}
+          platforms: ${{ matrix.platform }}
           push: true
           tags: |
-            ${{ steps.image-names.outputs.backend }}:${{ needs.release.outputs.new_release_version }}
-            ${{ steps.image-names.outputs.backend }}:latest
-          cache-from: type=gha,scope=backend
-          cache-to: type=gha,mode=max,scope=backend
+            ${{ steps.image-name.outputs.image }}:${{ needs.release.outputs.new_release_version }}-${{ steps.platform.outputs.arch }}
+          cache-from: type=gha,scope=${{ matrix.component }}-${{ steps.platform.outputs.arch }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.component }}-${{ steps.platform.outputs.arch }}
+
+  create-manifest:
+    name: Create Multi-Arch Manifests
+    needs: [release, build-and-push]
+    if: needs.release.outputs.new_release_published == 'true'
+    runs-on: ubuntu-latest
+
+    env:
+      REGISTRY: ghcr.io
+
+    steps:
+      - name: Set image names to lowercase
+        id: image-names
+        run: |
+          echo "frontend=${{ env.REGISTRY }}/${{ github.repository }}" | tr '[:upper:]' '[:lower:]' >> $GITHUB_OUTPUT
+          echo "backend=${{ env.REGISTRY }}/${{ github.repository }}-backend" | tr '[:upper:]' '[:lower:]' >> $GITHUB_OUTPUT
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create and push frontend manifest
+        run: |
+          VERSION=${{ needs.release.outputs.new_release_version }}
+          IMAGE=${{ steps.image-names.outputs.frontend }}
+          docker manifest create ${IMAGE}:${VERSION} \
+            ${IMAGE}:${VERSION}-amd64 \
+            ${IMAGE}:${VERSION}-arm64
+          docker manifest create ${IMAGE}:latest \
+            ${IMAGE}:${VERSION}-amd64 \
+            ${IMAGE}:${VERSION}-arm64
+          docker manifest push ${IMAGE}:${VERSION}
+          docker manifest push ${IMAGE}:latest
+
+      - name: Create and push backend manifest
+        run: |
+          VERSION=${{ needs.release.outputs.new_release_version }}
+          IMAGE=${{ steps.image-names.outputs.backend }}
+          docker manifest create ${IMAGE}:${VERSION} \
+            ${IMAGE}:${VERSION}-amd64 \
+            ${IMAGE}:${VERSION}-arm64
+          docker manifest create ${IMAGE}:latest \
+            ${IMAGE}:${VERSION}-amd64 \
+            ${IMAGE}:${VERSION}-arm64
+          docker manifest push ${IMAGE}:${VERSION}
+          docker manifest push ${IMAGE}:latest
 
       - name: Summary
         run: |
@@ -107,6 +165,6 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Version:** ${{ needs.release.outputs.new_release_version }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Docker Images:**" >> $GITHUB_STEP_SUMMARY
+          echo "**Docker Images (multi-arch: amd64 + arm64):**" >> $GITHUB_STEP_SUMMARY
           echo "- \`${{ steps.image-names.outputs.frontend }}:${{ needs.release.outputs.new_release_version }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- \`${{ steps.image-names.outputs.backend }}:${{ needs.release.outputs.new_release_version }}\`" >> $GITHUB_STEP_SUMMARY
