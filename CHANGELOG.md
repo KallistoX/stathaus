@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/KallistoX/stathaus/compare/v1.2.1...v1.3.0) (2026-01-23)
+
+
+### Features
+
+* **groups:** Add meter grouping feature ([807c481](https://github.com/KallistoX/stathaus/commit/807c48140d020f5b659fc915733132b1ef3e724e))
+
 ## [1.2.1](https://github.com/KallistoX/stathaus/compare/v1.2.0...v1.2.1) (2026-01-23)
 
 
