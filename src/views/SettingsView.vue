@@ -109,39 +109,77 @@
           </div>
         </div>
 
-        <!-- WebDAV Cloud Sync -->
-        <div class="p-4 border border-gray-200 dark:border-gray-700 rounded-lg" :class="{ 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700': storageMode === 'webdav' }">
+        <!-- Cloud Sync via OAuth -->
+        <div class="p-4 border border-gray-200 dark:border-gray-700 rounded-lg" :class="{ 'bg-blue-50 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700': storageMode === 'cloud' }">
           <div class="flex items-start justify-between">
             <div class="flex-1">
-              <h3 class="font-semibold text-gray-900 dark:text-white">☁️ Cloud-Sync (WebDAV)</h3>
+              <h3 class="font-semibold text-gray-900 dark:text-white">☁️ Cloud-Sync</h3>
               <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                Automatische Synchronisation mit Nextcloud, ownCloud oder anderen WebDAV-Diensten
+                Sichere Synchronisation deiner Daten über mehrere Geräte hinweg
               </p>
               <ul class="mt-2 text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                <li>✓ iOS und Desktop kompatibel</li>
-                <li>✓ Automatische Hintergrund-Synchronisation</li>
-                <li>✓ Selbst gehostet oder Cloud-Anbieter</li>
-                <li>✓ Konflikt-Erkennung bei mehreren Geräten</li>
+                <li>✓ Automatische Synchronisation</li>
+                <li>✓ Sichere Authentifizierung</li>
+                <li>✓ Geräteübergreifend verfügbar</li>
+                <li>✓ Verschlüsselte Datenübertragung</li>
               </ul>
+
+              <!-- Logged in state -->
+              <div v-if="isLoggedIn" class="mt-4 space-y-3">
+                <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                  <div class="flex items-center gap-2 text-green-700 dark:text-green-400 mb-1">
+                    <span class="text-lg">✓</span>
+                    <span class="font-medium text-sm">Angemeldet als {{ userInfo?.email || userInfo?.name || 'User' }}</span>
+                  </div>
+                  <p v-if="syncMetadata?.lastUpdated" class="text-xs text-gray-600 dark:text-gray-400">
+                    Letzte Sync: {{ formatLastSync(syncMetadata.lastUpdated) }}
+                  </p>
+                  <p v-if="syncMetadata" class="text-xs text-gray-600 dark:text-gray-400">
+                    {{ syncMetadata.metersCount || 0 }} Zähler, {{ syncMetadata.readingsCount || 0 }} Ablesungen
+                  </p>
+                </div>
+
+                <div class="flex gap-2">
+                  <button
+                    @click="handleCloudSync"
+                    :disabled="syncing"
+                    class="px-3 py-1.5 bg-blue-600 dark:bg-blue-700 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                  >
+                    {{ syncing ? 'Synchronisiere...' : 'Jetzt synchronisieren' }}
+                  </button>
+                  <button
+                    @click="handleOAuthLogout"
+                    class="px-3 py-1.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-sm"
+                  >
+                    Abmelden
+                  </button>
+                </div>
+
+                <p v-if="syncError" class="text-xs text-red-600 dark:text-red-400">{{ syncError }}</p>
+                <p v-if="syncSuccess" class="text-xs text-green-600 dark:text-green-400">{{ syncSuccess }}</p>
+              </div>
             </div>
+
+            <!-- Action button (right side) -->
             <div class="ml-4">
               <button
-                v-if="storageMode !== 'webdav'"
-                @click="showWebDAVSetup = true"
-                :disabled="isLoading"
-                class="px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                v-if="!isLoggedIn"
+                @click="handleOAuthLogin"
+                :disabled="oauthLoading || isLoading"
+                class="px-4 py-2 bg-blue-600 dark:bg-blue-700 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
               >
-                Aktivieren
+                {{ oauthLoading ? 'Lädt...' : 'Anmelden' }}
               </button>
-              <button
+              <span
                 v-else
-                @click="showWebDAVSetup = true"
-                class="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors text-gray-900 dark:text-white"
+                class="px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-lg text-sm font-medium inline-block"
               >
-                Einstellungen
-              </button>
+                Aktiv
+              </span>
             </div>
           </div>
+
+          <p v-if="oauthError" class="mt-3 text-sm text-red-600 dark:text-red-400">{{ oauthError }}</p>
         </div>
       </div>
     </div>
@@ -264,28 +302,30 @@
       @close="showAddType = false"
       @added="handleTypeAdded"
     />
-
-    <!-- WebDAV Setup Modal -->
-    <WebDAVSetupModal
-      v-if="showWebDAVSetup"
-      :show="showWebDAVSetup"
-      @complete="handleWebDAVComplete"
-      @cancel="showWebDAVSetup = false"
-    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useDataStore } from '@/stores/dataStore'
 import AddMeterTypeModal from '@/components/AddMeterTypeModal.vue'
-import WebDAVSetupModal from '@/components/WebDAVSetupModal.vue'
+import CloudStorageAdapter from '@/adapters/CloudStorageAdapter.js'
 
 const dataStore = useDataStore()
+const cloudAdapter = new CloudStorageAdapter()
 
 const showAddType = ref(false)
-const showWebDAVSetup = ref(false)
 const fileInput = ref(null)
+
+// OAuth state
+const isLoggedIn = ref(false)
+const userInfo = ref(null)
+const syncMetadata = ref(null)
+const oauthLoading = ref(false)
+const oauthError = ref(null)
+const syncing = ref(false)
+const syncError = ref(null)
+const syncSuccess = ref(null)
 
 const storageMode = computed(() => dataStore.storageMode)
 const storageName = computed(() => dataStore.storageName)
@@ -318,16 +358,6 @@ async function switchToFileSystem(mode) {
     }
   } catch (error) {
     alert('Fehler beim Wechseln: ' + error.message)
-  }
-}
-
-async function handleWebDAVComplete(config) {
-  try {
-    await dataStore.switchToWebDAV(config)
-    showWebDAVSetup.value = false
-    alert('WebDAV-Synchronisation erfolgreich eingerichtet!')
-  } catch (error) {
-    alert('Fehler beim Einrichten: ' + error.message)
   }
 }
 
@@ -381,5 +411,105 @@ function confirmReset() {
 
 function handleTypeAdded() {
   showAddType.value = false
+}
+
+// OAuth methods
+onMounted(async () => {
+  // Check if user is already logged in
+  isLoggedIn.value = cloudAdapter.isAuthenticated()
+
+  if (isLoggedIn.value) {
+    try {
+      userInfo.value = await cloudAdapter.getUserInfo()
+      syncMetadata.value = await cloudAdapter.getMetadata()
+    } catch (error) {
+      console.error('Failed to load user info:', error)
+      isLoggedIn.value = false
+    }
+  }
+})
+
+async function handleOAuthLogin() {
+  oauthLoading.value = true
+  oauthError.value = null
+
+  try {
+    await cloudAdapter.login()
+    // User will be redirected to OAuth provider
+  } catch (error) {
+    console.error('OAuth login failed:', error)
+    oauthError.value = error.message || 'Anmeldung fehlgeschlagen'
+    oauthLoading.value = false
+  }
+}
+
+async function handleOAuthLogout() {
+  if (!confirm('Wirklich abmelden? Lokale Daten bleiben erhalten.')) {
+    return
+  }
+
+  try {
+    await cloudAdapter.logout()
+    isLoggedIn.value = false
+    userInfo.value = null
+    syncMetadata.value = null
+    syncError.value = null
+    syncSuccess.value = null
+  } catch (error) {
+    console.error('Logout failed:', error)
+    alert('Fehler beim Abmelden: ' + error.message)
+  }
+}
+
+async function handleCloudSync() {
+  syncing.value = true
+  syncError.value = null
+  syncSuccess.value = null
+
+  try {
+    // Get current local data
+    const meters = dataStore.data.meters || []
+    const readings = dataStore.data.readings || []
+
+    // Upload to cloud
+    const metadata = await cloudAdapter.syncAll(meters, readings)
+    syncMetadata.value = metadata
+
+    syncSuccess.value = 'Synchronisation erfolgreich!'
+
+    // Clear success message after 3 seconds
+    setTimeout(() => {
+      syncSuccess.value = null
+    }, 3000)
+  } catch (error) {
+    console.error('Sync failed:', error)
+    syncError.value = error.message || 'Synchronisation fehlgeschlagen'
+  } finally {
+    syncing.value = false
+  }
+}
+
+function formatLastSync(timestamp) {
+  if (!timestamp) return 'Nie'
+
+  const date = new Date(timestamp)
+  const now = new Date()
+  const diffMs = now - date
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
+
+  if (diffMins < 1) return 'Gerade eben'
+  if (diffMins < 60) return `vor ${diffMins} Min`
+  if (diffHours < 24) return `vor ${diffHours} Std`
+  if (diffDays < 7) return `vor ${diffDays} Tagen`
+
+  return date.toLocaleDateString('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
 }
 </script>

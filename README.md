@@ -9,9 +9,9 @@ Eine Progressive Web App zur Erfassung und Verwaltung von Zählerständen für S
 - **Unbegrenzte Zähler**: Verwalte beliebig viele Zähler pro Typ
 - **Detaillierte Ablesungen**: Erfasse Werte mit Zeitstempel und Notizen
 
-### 💾 Zwei Speicher-Modi
+### 💾 Drei Speicher-Modi
 
-#### 🔵 Browser-Speicher (IndexedDB)
+#### 🔵 Browser-Speicher (IndexedDB) - Standard
 - ✅ Einfach und schnell
 - ✅ Keine Konfiguration nötig
 - ✅ Funktioniert offline
@@ -31,6 +31,21 @@ Eine Progressive Web App zur Erfassung und Verwaltung von Zählerständen für S
 4. Auf Device 2: Gleiche Datei öffnen → synchronisiert!
 ```
 
+#### ☁️ Cloud-Sync mit OAuth (Empfohlen)
+- ✅ Automatische Synchronisation
+- ✅ Sichere Authentifizierung (Authentik, Keycloak, Auth0, Google, etc.)
+- ✅ Geräteübergreifend verfügbar
+- ✅ Keine manuelle Dateiverwaltung
+- ✅ Funktioniert auf allen Geräten (iOS, Android, Desktop)
+
+**Workflow:**
+```
+1. Einstellungen → Cloud-Sync → "Anmelden"
+2. Mit OAuth-Provider einloggen (z.B. Authentik)
+3. Daten werden automatisch synchronisiert
+4. Auf anderem Gerät anmelden → Daten sofort verfügbar!
+```
+
 ### 📈 Visualisierung
 - Interaktive Charts mit ECharts
 - Touch-optimiert für Mobile
@@ -47,17 +62,27 @@ Eine Progressive Web App zur Erfassung und Verwaltung von Zählerständen für S
 - Funktioniert offline
 - Native App-Experience
 
-##☁️ Production Deployment (Kubernetes)
+## ☁️ Production Deployment (Kubernetes)
 
-StatHaus can be deployed to Kubernetes using Helm and automated with Ansible.
+StatHaus can be deployed to Kubernetes with full OAuth2/OIDC support and Redis-backed cloud sync.
+
+### Architecture
+
+```
+Frontend (Vue PWA) → Nginx → Backend (Node.js/Express) → Redis
+                                  ↓
+                           OAuth2/OIDC Provider
+                         (Authentik, Keycloak, Auth0, etc.)
+```
 
 ### Prerequisites
 - Kubernetes cluster (K3s, K8s, etc.)
-- Helm 3.x
 - kubectl configured
 - Ansible (for automated deployment)
 - cert-manager installed (for TLS certificates)
-- Ingress controller (nginx)
+- Ingress controller (Traefik, nginx)
+- Redis instance (can use shared Redis)
+- OAuth2/OIDC provider (Authentik recommended, or any OIDC provider)
 
 ### Quick Deployment with Ansible
 
@@ -67,12 +92,48 @@ cp ansible/inventory/hosts.yml.example ansible/inventory/hosts.yml
 # Edit hosts.yml with your server IP and domain
 ```
 
-2. **Deploy**:
-```bash
-ansible-playbook ansible/playbooks/25-stathaus.yml -i ansible/inventory/hosts.yml
+Example configuration:
+```yaml
+all:
+  hosts:
+    your-server:
+      stathaus_domain: "stathaus.your-domain.com"
+
+      # Optional: Custom Redis (defaults to shared Redis DB 2)
+      # stathaus_redis_host: "custom-redis.namespace.svc.cluster.local"
+      # stathaus_redis_port: "6379"
+      # stathaus_redis_db: "0"
 ```
 
-3. **Access your app**:
+2. **Deploy**:
+```bash
+ansible-playbook ansible/playbooks/25-stathaus.yml
+```
+
+The playbook will:
+- Deploy frontend (nginx + Vue PWA)
+- Deploy backend (Node.js + Express)
+- Configure OAuth with Authentik (if available) or prompt for manual setup
+- Connect to Redis for data storage
+- Configure Ingress with TLS
+
+3. **OAuth Setup**:
+
+**Automatic (with Authentik):**
+If Authentik is detected in your cluster, OAuth is configured automatically.
+
+**Manual (other providers):**
+```bash
+kubectl create secret generic stathaus-oidc-credentials \
+  --namespace stathaus \
+  --from-literal=issuer=https://your-oauth-provider.com \
+  --from-literal=client_id=your-client-id \
+  --from-literal=client_secret=your-client-secret
+```
+
+See [docs/OAUTH_SETUP.md](docs/OAUTH_SETUP.md) for detailed provider-specific instructions.
+
+4. **Access your app**:
 ```
 https://stathaus.your-domain.com
 ```
@@ -101,6 +162,10 @@ GitHub Actions automatically builds and pushes Docker images to GitHub Container
 
 **Workflow**: `.github/workflows/build-and-push.yml`
 
+**Images built**:
+- `ghcr.io/kallistox/stathaus:latest` - Frontend (nginx + Vue PWA)
+- `ghcr.io/kallistox/stathaus-backend:latest` - Backend (Node.js + Express)
+
 **Image tags**:
 - `latest` - Latest main branch
 - `v1.0.0` - Semantic version tags
@@ -112,45 +177,71 @@ GitHub Actions automatically builds and pushes Docker images to GitHub Container
 # With Ansible
 ansible-playbook ansible/playbooks/25-stathaus.yml \
   -e image_tag=v1.0.1
-
-# With Helm
-helm upgrade stathaus ./helm \
-  --namespace stathaus \
-  --set image.tag=v1.0.1
 ```
 
 ### Production Features
-- **Auto-scaling**: Ready for horizontal scaling (though single pod is sufficient)
-- **Health checks**: Liveness and readiness probes configured
+
+**Frontend**:
+- **PWA**: Installable, offline-first
+- **Static assets**: Nginx with gzip compression
+- **Health checks**: Liveness and readiness probes
+- **Resource limits**: CPU 100m, Memory 128Mi
+
+**Backend**:
+- **OAuth2/OIDC**: Generic support for any provider
+- **Redis storage**: Fast, scalable data persistence
+- **Token management**: Automatic refresh, JWT validation
+- **Security**: Rate limiting, input validation, security headers
+- **Logging**: Structured logging with Winston
+- **Health checks**: `/api/health` and `/api/health/ready`
+- **Resource limits**: CPU 200m, Memory 256Mi
+
+**Infrastructure**:
 - **TLS/HTTPS**: Automatic Let's Encrypt certificates via cert-manager
-- **Resource limits**: Conservative CPU (100m) and memory (128Mi) limits
-- **Security**: Non-root nginx, read-only filesystem
+- **Sidecar pattern**: Frontend and backend in same pod
+- **Redis**: Shared or dedicated instance
+- **Ingress**: Traefik or nginx with proper headers
 
-### WebDAV Cloud Sync (Nextcloud)
+### Cloud Sync with OAuth
 
-The primary reason for production deployment is to enable WebDAV sync without CORS issues:
+StatHaus provides secure cloud synchronization using OAuth2/OIDC authentication:
 
-1. Deploy StatHaus to production (HTTPS required)
+1. Deploy StatHaus to production
 2. Access app at https://stathaus.your-domain.com
-3. Go to Settings → Storage → Cloud-Sync (WebDAV)
-4. Enter your Nextcloud URL
-5. Click "Sign in with Nextcloud"
-6. Complete Nextcloud login (MFA supported)
-7. Data automatically syncs to `/StatHaus/stathaus-data.json`
+3. Go to Settings → Cloud-Sync
+4. Click "Anmelden" (Sign in)
+5. Authenticate with your OAuth provider
+6. Data automatically syncs to Redis
+7. Use on multiple devices with same account
 
-**Why production?**: WebDAV Login Flow v2 requires HTTPS for both app and Nextcloud. Localhost development triggers CORS errors.
+**Supported Providers**:
+- Authentik (self-hosted, recommended)
+- Keycloak (self-hosted, enterprise)
+- Auth0 (cloud service)
+- Google OAuth
+- Microsoft Entra ID (Azure AD)
+- Any OAuth2/OIDC-compliant provider
+
+See [docs/OAUTH_SETUP.md](docs/OAUTH_SETUP.md) for provider-specific setup instructions.
 
 ### Monitoring
 
 ```bash
-# View logs
-kubectl logs -n stathaus -l app.kubernetes.io/name=stathaus -f
+# View frontend logs
+kubectl logs -n stathaus -l app.kubernetes.io/name=stathaus -c stathaus -f
+
+# View backend logs
+kubectl logs -n stathaus -l app.kubernetes.io/name=stathaus -c backend -f
 
 # Check pod status
 kubectl get pods -n stathaus -w
 
 # Check certificate
 kubectl describe certificate -n stathaus stathaus-tls
+
+# Test backend health
+curl https://stathaus.your-domain.com/api/health
+curl https://stathaus.your-domain.com/api/health/ready
 ```
 
 ### Troubleshooting
@@ -158,7 +249,25 @@ kubectl describe certificate -n stathaus stathaus-tls
 **Pod won't start**:
 ```bash
 kubectl describe pod -n stathaus -l app.kubernetes.io/name=stathaus
-kubectl logs -n stathaus -l app.kubernetes.io/name=stathaus
+kubectl logs -n stathaus -l app.kubernetes.io/name=stathaus -c backend
+```
+
+**OAuth not working**:
+```bash
+# Check if secret exists
+kubectl get secret -n stathaus stathaus-oidc-credentials
+
+# Check backend logs for OAuth errors
+kubectl logs -n stathaus -l app.kubernetes.io/name=stathaus -c backend | grep -i oauth
+```
+
+**Redis connection issues**:
+```bash
+# Check Redis is accessible
+kubectl get pods -n shared-services -l app=redis
+
+# Test Redis connection from backend pod
+kubectl exec -n stathaus deployment/stathaus -c backend -- redis-cli -h shared-redis-master.shared-services.svc.cluster.local -a <password> ping
 ```
 
 **Certificate issues**:
@@ -168,13 +277,11 @@ kubectl describe certificate -n stathaus stathaus-tls
 kubectl logs -n cert-manager -l app=cert-manager
 ```
 
-**WebDAV CORS errors** (shouldn't happen in production):
-- Verify both StatHaus and Nextcloud use HTTPS
-- Check Nextcloud config.php CORS settings
-- Try manual authentication instead of Login Flow v2
+See [backend/README.md](backend/README.md) for detailed backend configuration and [docs/OAUTH_SETUP.md](docs/OAUTH_SETUP.md) for OAuth provider setup.
 
 ## 🛠️ Technologie-Stack
 
+**Frontend**:
 - **Framework**: Vue 3 (Composition API)
 - **Build Tool**: Vite
 - **State Management**: Pinia
@@ -182,7 +289,17 @@ kubectl logs -n cert-manager -l app=cert-manager
 - **Styling**: Tailwind CSS
 - **Charts**: Apache ECharts
 - **PWA**: vite-plugin-pwa
-- **Storage**: IndexedDB + File System Access API
+- **Storage**: IndexedDB + File System Access API + Cloud Sync
+
+**Backend**:
+- **Runtime**: Node.js 20 (Alpine)
+- **Framework**: Express.js
+- **Authentication**: openid-client (OAuth2/OIDC)
+- **Database**: Redis (ioredis client)
+- **Validation**: Joi
+- **Logging**: Winston
+- **Security**: Helmet, express-rate-limit
+- **Deployment**: Multi-stage Docker builds
 
 ## 🚀 Schnellstart mit Docker
 
@@ -247,35 +364,58 @@ npm run preview
 
 ```
 stathaus/
-├── src/
-│   ├── assets/          # CSS und statische Assets
-│   ├── components/      # Vue Komponenten
+├── src/                      # Frontend (Vue PWA)
+│   ├── assets/               # CSS und statische Assets
+│   ├── components/           # Vue Komponenten
 │   │   ├── AddMeterModal.vue
 │   │   ├── AddMeterTypeModal.vue
+│   │   ├── OAuthCallback.vue
 │   │   └── QuickAddReadingModal.vue
-│   ├── views/           # Seiten-Komponenten
+│   ├── views/                # Seiten-Komponenten
 │   │   ├── DashboardView.vue
 │   │   ├── MetersView.vue
 │   │   ├── MeterDetailView.vue
 │   │   └── SettingsView.vue
-│   ├── storage/         # Storage Layer
-│   │   ├── StorageAdapter.js
+│   ├── adapters/             # Storage Adapters
 │   │   ├── IndexedDBAdapter.js
 │   │   ├── FileSystemAdapter.js
-│   │   └── DataManager.js
-│   ├── stores/          # Pinia Stores
+│   │   └── CloudStorageAdapter.js
+│   ├── services/             # Services
+│   │   ├── OAuthAuthService.js
+│   │   └── StorageService.js
+│   ├── stores/               # Pinia Stores
 │   │   └── dataStore.js
-│   ├── router/          # Vue Router
+│   ├── router/               # Vue Router
 │   │   └── index.js
-│   ├── App.vue          # Haupt-Komponente
-│   └── main.js          # Entry Point
-├── public/              # Öffentliche Assets
-├── docker-compose.yml   # Docker Development Setup
-├── Dockerfile.dev       # Development Dockerfile
-├── Dockerfile           # Production Dockerfile
-├── vite.config.js       # Vite Konfiguration
-├── tailwind.config.js   # Tailwind Konfiguration
-└── package.json         # Dependencies
+│   ├── App.vue               # Haupt-Komponente
+│   └── main.js               # Entry Point
+├── backend/                  # Backend (Node.js + Express)
+│   ├── src/
+│   │   ├── index.js          # Server entry point
+│   │   ├── config.js         # Configuration
+│   │   ├── logger.js         # Winston logger
+│   │   ├── redis.js          # Redis client
+│   │   ├── oauth.js          # OAuth2/OIDC client
+│   │   ├── middleware/       # Express middleware
+│   │   ├── routes/           # API routes
+│   │   ├── services/         # Business logic
+│   │   └── utils/            # Utilities
+│   ├── Dockerfile            # Multi-stage build
+│   ├── package.json          # Dependencies
+│   └── README.md             # Backend docs
+├── ansible/                  # Kubernetes deployment
+│   ├── playbooks/
+│   │   └── 25-stathaus.yml   # Main playbook
+│   └── inventory/
+│       └── hosts.yml.example
+├── docs/
+│   └── OAUTH_SETUP.md        # OAuth provider setup guide
+├── public/                   # Public assets
+├── docker-compose.yml        # Development setup
+├── Dockerfile                # Frontend production image
+├── nginx.conf                # Nginx config with /api proxy
+├── vite.config.js            # Vite config
+└── package.json              # Frontend dependencies
 ```
 
 ## 🎯 Verwendung

@@ -22,8 +22,6 @@
               :sync-status="syncStatus"
               :sync-error="syncError"
               :last-sync-time="lastSyncTime"
-              :server-url="webdavServerUrl"
-              :username="webdavUsername"
               :storage-mode="storageMode"
             />
           </div>
@@ -130,12 +128,10 @@ const showPermissionModal = computed(() => dataStore.showPermissionModal)
 const showPermissionBanner = computed(() => dataStore.showPermissionBanner)
 const permissionState = computed(() => dataStore.permissionState)
 
-// WebDAV sync state
+// Sync state
 const syncStatus = computed(() => dataStore.syncStatus)
 const syncError = computed(() => dataStore.syncError)
 const lastSyncTime = computed(() => dataStore.lastSyncTime)
-const webdavServerUrl = computed(() => dataStore.webdavServerUrl)
-const webdavUsername = computed(() => dataStore.webdavUsername)
 
 async function retryInit() {
   await dataStore.initialize()

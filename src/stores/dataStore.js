@@ -3,7 +3,6 @@ import { ref, computed, watch } from 'vue'
 import { DataManager } from '@/storage/DataManager.js'
 import { IndexedDBAdapter } from '@/storage/IndexedDBAdapter.js'
 import { FileSystemAdapter } from '@/storage/FileSystemAdapter.js'
-import { WebDAVAdapter } from '@/storage/WebDAVAdapter.js'
 
 export const useDataStore = defineStore('data', () => {
   // State
@@ -29,12 +28,10 @@ export const useDataStore = defineStore('data', () => {
   const showPermissionBanner = ref(false)
   const pendingFsAdapter = ref(null)
 
-  // WebDAV sync state
+  // Sync state (for cloud storage)
   const syncStatus = ref('idle') // idle | syncing | synced | error | offline
   const syncError = ref(null)
   const lastSyncTime = ref(null)
-  const webdavServerUrl = ref(null)
-  const webdavUsername = ref(null)
 
   // Computed
   const storageMode = computed(() => {
@@ -443,58 +440,12 @@ export const useDataStore = defineStore('data', () => {
     }
   }
 
-  async function switchToWebDAV(config) {
-    isLoading.value = true
-    error.value = null
-    syncStatus.value = 'syncing'
-
-    try {
-      const webdavAdapter = new WebDAVAdapter()
-
-      // Configure and test connection
-      await webdavAdapter.configure(
-        config.serverUrl,
-        config.username,
-        config.password,
-        config.filePath
-      )
-
-      if (!await webdavAdapter.canUse()) {
-        throw new Error('WebDAV-Adapter kann nicht initialisiert werden')
-      }
-
-      // Initialize and test connection
-      await webdavAdapter.init()
-
-      // Migrate data from current adapter
-      await dataManager.value.switchAdapter(webdavAdapter, false)
-
-      // Store server info
-      webdavServerUrl.value = config.serverUrl
-      webdavUsername.value = config.username
-
-      // Update sync status
-      syncStatus.value = 'synced'
-      syncError.value = null
-      lastSyncTime.value = new Date().toISOString()
-
-      return true
-    } catch (err) {
-      console.error('Error switching to WebDAV:', err)
-      error.value = err.message
-      syncStatus.value = 'error'
-      syncError.value = err.message
-      throw err
-    } finally {
-      isLoading.value = false
-    }
-  }
 
   // Watch for data changes and update sync status
   watch(
     () => data.value,
     () => {
-      if (storageMode.value === 'webdav' && syncStatus.value !== 'error') {
+      if (storageMode.value === 'cloud' && syncStatus.value !== 'error') {
         syncStatus.value = 'syncing'
 
         // After save completes (DataManager handles the actual save)
@@ -513,13 +464,13 @@ export const useDataStore = defineStore('data', () => {
   // Listen for online/offline events
   if (typeof window !== 'undefined') {
     window.addEventListener('online', () => {
-      if (storageMode.value === 'webdav' && syncStatus.value === 'offline') {
+      if (storageMode.value === 'cloud' && syncStatus.value === 'offline') {
         syncStatus.value = 'idle'
       }
     })
 
     window.addEventListener('offline', () => {
-      if (storageMode.value === 'webdav') {
+      if (storageMode.value === 'cloud') {
         syncStatus.value = 'offline'
       }
     })
@@ -630,18 +581,15 @@ export const useDataStore = defineStore('data', () => {
     showPermissionModal,
     showPermissionBanner,
 
-    // WebDAV Sync State
+    // Sync State
     syncStatus,
     syncError,
     lastSyncTime,
-    webdavServerUrl,
-    webdavUsername,
 
     // Actions
     initialize,
     switchToFileSystem,
     switchToIndexedDB,
-    switchToWebDAV,
 
     // Theme
     setTheme,

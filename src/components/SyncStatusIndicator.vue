@@ -122,7 +122,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { formatRelativeTime } from '../utils/webdavHelpers.js'
 
 const props = defineProps({
   syncStatus: {
@@ -158,9 +157,9 @@ const router = useRouter()
 const showDetails = ref(false)
 const isOnline = ref(navigator.onLine)
 
-// Should show indicator (only for WebDAV mode)
+// Should show indicator (only for Cloud mode)
 const shouldShow = computed(() => {
-  return props.storageMode === 'webdav'
+  return props.storageMode === 'cloud'
 })
 
 // Server info
@@ -244,7 +243,24 @@ function getTooltip() {
 // Get relative time
 function getRelativeTime() {
   if (!props.lastSyncTime) return ''
-  return formatRelativeTime(props.lastSyncTime)
+
+  const date = new Date(props.lastSyncTime)
+  const now = new Date()
+  const diffMs = now - date
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
+
+  if (diffMins < 1) return 'gerade eben'
+  if (diffMins < 60) return `vor ${diffMins} Min`
+  if (diffHours < 24) return `vor ${diffHours} Std`
+  if (diffDays < 7) return `vor ${diffDays} Tagen`
+
+  return date.toLocaleDateString('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  })
 }
 
 // Get full time

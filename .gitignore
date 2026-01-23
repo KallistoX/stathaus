@@ -38,9 +38,8 @@ lerna-debug.log*
 .DS_Store
 Thumbs.db
 
-# Ansible sensitive files
-ansible/inventory/hosts.yml
-!ansible/inventory/hosts.yml.example
+# Ansible directory (infrastructure-specific, not for public release)
+ansible/
 
 # Helm package files
 *.tgz
