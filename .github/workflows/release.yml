@@ -105,6 +105,7 @@ jobs:
           file: ${{ matrix.component == 'backend' && './backend/Dockerfile' || './Dockerfile' }}
           platforms: ${{ matrix.platform }}
           push: true
+          provenance: false
           tags: |
             ${{ steps.image-name.outputs.image }}:${{ needs.release.outputs.new_release_version }}-${{ steps.platform.outputs.arch }}
           cache-from: type=gha,scope=${{ matrix.component }}-${{ steps.platform.outputs.arch }}
