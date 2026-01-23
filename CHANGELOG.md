@@ -1,3 +1,10 @@
+## [1.0.2](https://github.com/KallistoX/stathaus/compare/v1.0.1...v1.0.2) (2026-01-23)
+
+
+### Bug Fixes
+
+* **ci:** Lowercase Docker image names for GHCR compatibility ([1cb83e8](https://github.com/KallistoX/stathaus/commit/1cb83e8d5c17c73d812e2d4bb164ee5be175aea1))
+
 ## [1.0.1](https://github.com/KallistoX/stathaus/compare/v1.0.0...v1.0.1) (2026-01-23)
 
 
