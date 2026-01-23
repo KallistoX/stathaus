@@ -43,7 +43,17 @@ const error = ref(null);
 const success = ref(false);
 const statusMessage = ref('Authentifizierung wird verarbeitet...');
 
+// Guard against multiple callback processing (can happen with Vue re-renders)
+let callbackProcessed = false;
+
 onMounted(async () => {
+  // Prevent double processing
+  if (callbackProcessed) {
+    console.log('OAuth callback already processed, skipping');
+    return;
+  }
+  callbackProcessed = true;
+
   try {
     // Get authorization code and state from URL parameters
     const urlParams = new URLSearchParams(window.location.search);
