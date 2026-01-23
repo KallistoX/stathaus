@@ -22,7 +22,6 @@ const syncRoutes = require('./routes/sync');
 
 // Import middleware
 const errorHandler = require('./middleware/errorHandler');
-const rateLimiter = require('./middleware/rateLimit');
 
 /**
  * Start the server
@@ -59,8 +58,8 @@ async function startServer() {
     // Initialize OAuth2/OIDC client
     await setupOAuth();
 
-    // Apply rate limiting to API routes
-    app.use('/api/', rateLimiter);
+    // Note: Rate limiting is handled at the Traefik ingress level
+    // See: matrix-ess-hetzner/ansible/playbooks/21-traefik-security.yml
 
     // Mount routes
     app.use('/api/health', healthRoutes);

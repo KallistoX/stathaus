@@ -45,10 +45,8 @@ const config = {
     // Supported JWT algorithms (including HS256 for Authentik compatibility)
     jwtAlgorithms: ['RS256', 'RS384', 'RS512', 'ES256', 'ES384', 'ES512', 'HS256', 'HS384', 'HS512'],
     // Maximum request payload size
-    maxPayloadSize: '10mb',
-    // Rate limiting
-    rateLimitWindow: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000, // 15 minutes
-    rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX) || 100 // requests per window
+    maxPayloadSize: '10mb'
+    // Note: Rate limiting is handled at the Traefik ingress level
   },
 
   // CORS Configuration
