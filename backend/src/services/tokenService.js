@@ -93,7 +93,17 @@ async function refreshAccessToken(refreshToken) {
       tokenType: tokenSet.token_type || 'Bearer'
     };
   } catch (error) {
-    logger.error('Token refresh failed', { error: error.message });
+    // Log detailed error info for debugging
+    logger.error('Token refresh failed', {
+      error: error.message,
+      errorName: error.name,
+      // openid-client OPError properties
+      oauthError: error.error,
+      oauthErrorDescription: error.error_description,
+      // HTTP response details if available
+      statusCode: error.statusCode || error.response?.statusCode,
+      responseBody: error.response?.body
+    });
     throw new UnauthorizedError('Failed to refresh access token');
   }
 }

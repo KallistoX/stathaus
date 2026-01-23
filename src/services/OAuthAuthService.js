@@ -291,6 +291,7 @@ export default class OAuthAuthService {
 
   /**
    * Refresh access token using refresh token
+   * Includes retry logic for transient errors (503, network issues)
    * @returns {Promise<Object>} New token set
    */
   async refreshToken() {
@@ -299,30 +300,59 @@ export default class OAuthAuthService {
       throw new Error('No refresh token available');
     }
 
-    try {
-      const response = await fetch(`${this.apiBaseUrl}/api/auth/refresh`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          refresh_token: refreshToken
-        })
-      });
+    const maxRetries = 2;
+    let lastError;
 
-      if (!response.ok) {
-        throw new Error('Token refresh failed');
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await fetch(`${this.apiBaseUrl}/api/auth/refresh`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            refresh_token: refreshToken
+          })
+        });
+
+        if (response.ok) {
+          const tokens = await response.json();
+          this.storeTokens(tokens);
+          return tokens;
+        }
+
+        // Handle specific status codes
+        if (response.status === 401 || response.status === 400) {
+          // Token is actually invalid - don't retry, logout
+          console.warn('Refresh token invalid, logging out');
+          this.logout();
+          throw new Error('Session expired - please log in again');
+        }
+
+        if (response.status === 503 && attempt < maxRetries) {
+          // Service unavailable - wait and retry
+          console.log(`Token refresh got 503, retrying (attempt ${attempt + 1}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+          continue;
+        }
+
+        // Other errors
+        lastError = new Error(`Token refresh failed with status ${response.status}`);
+      } catch (error) {
+        lastError = error;
+        // Network errors (TypeError) - retry
+        if (attempt < maxRetries && (error.name === 'TypeError' || error.message.includes('fetch'))) {
+          console.log(`Token refresh network error, retrying (attempt ${attempt + 1}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+          continue;
+        }
       }
-
-      const tokens = await response.json();
-      this.storeTokens(tokens);
-
-      return tokens;
-    } catch (error) {
-      // If refresh fails, user needs to log in again
-      this.logout();
-      throw error;
     }
+
+    // All retries failed - logout and throw
+    console.error('Token refresh failed after retries:', lastError?.message);
+    this.logout();
+    throw lastError || new Error('Token refresh failed');
   }
 
   /**
