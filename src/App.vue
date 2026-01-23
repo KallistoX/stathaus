@@ -211,12 +211,24 @@ async function retryInit() {
 }
 
 async function checkAuthState() {
+  const wasAuthenticated = cloudAdapter.isAuthenticated()
+
   // First check if already authenticated
-  if (cloudAdapter.isAuthenticated()) {
+  if (wasAuthenticated) {
     isLoggedIn.value = true
   } else {
     // Try to restore session using refresh token
-    isLoggedIn.value = await cloudAdapter.tryRestoreSession()
+    const restored = await cloudAdapter.tryRestoreSession()
+    isLoggedIn.value = restored
+
+    // If session was restored and we're not already on cloud storage, switch to cloud
+    if (restored && dataStore.storageMode !== 'cloud') {
+      try {
+        await dataStore.switchToCloud()
+      } catch (err) {
+        console.error('Failed to switch to cloud storage:', err)
+      }
+    }
   }
 
   if (isLoggedIn.value) {

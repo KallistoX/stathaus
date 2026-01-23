@@ -19,6 +19,7 @@
             <div>
               <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ meter.name }}</h1>
               <p class="text-gray-600 dark:text-gray-400 mt-1">{{ meter.type?.name }}</p>
+              <p v-if="meter.location" class="text-sm text-gray-500 dark:text-gray-400 mt-1">📍 {{ meter.location }}</p>
             </div>
           </div>
           <div class="flex space-x-2">

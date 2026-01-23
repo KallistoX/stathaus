@@ -43,6 +43,7 @@
               <div>
                 <h3 class="font-semibold text-gray-900 dark:text-white">{{ meter.name }}</h3>
                 <p class="text-sm text-gray-500 dark:text-gray-400">{{ meter.type?.name }}</p>
+                <p v-if="meter.location" class="text-xs text-gray-400 dark:text-gray-500">📍 {{ meter.location }}</p>
               </div>
             </div>
           </div>
