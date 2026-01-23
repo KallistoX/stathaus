@@ -58,7 +58,6 @@ export class DataManager {
       this.data.settings.storageMode = expectedMode
 
       if (modeChanged) {
-        console.log(`DataManager: Updated storage mode from ${oldMode} to ${expectedMode}`)
         this._scheduleAutoSave()
       }
     } else {

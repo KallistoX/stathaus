@@ -113,8 +113,6 @@ export default class CloudStorageAdapter extends StorageAdapter {
       }
 
       const result = await response.json();
-      console.log('Data synced to cloud:', result.metadata);
-
       return result.metadata;
     } catch (error) {
       console.error('Failed to save to cloud:', error);
@@ -154,8 +152,7 @@ export default class CloudStorageAdapter extends StorageAdapter {
     try {
       await this.authService.refreshToken();
       return true;
-    } catch (error) {
-      console.log('Session restore failed:', error.message);
+    } catch {
       return false;
     }
   }

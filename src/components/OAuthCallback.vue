@@ -52,7 +52,6 @@ onMounted(async () => {
   // Check if we're already processing this specific callback
   const processingState = sessionStorage.getItem(callbackKey);
   if (processingState === currentState) {
-    console.log('OAuth callback already being processed for this state, skipping duplicate');
     return;
   }
 
@@ -89,9 +88,8 @@ onMounted(async () => {
     statusMessage.value = 'Cloud-Speicher wird aktiviert...';
     try {
       await dataStore.switchToCloud();
-    } catch (switchError) {
+    } catch {
       // If conflict modal is shown, we still redirect but let the modal handle it
-      console.log('Cloud switch may need conflict resolution:', switchError.message);
     }
 
     // Success - clear processing flag

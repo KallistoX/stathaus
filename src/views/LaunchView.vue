@@ -39,8 +39,8 @@ onMounted(async () => {
       router.push('/')
       return
     }
-  } catch (error) {
-    console.log('Session restore failed, initiating login')
+  } catch {
+    // Session restore failed, will initiate login
   }
 
   // Not authenticated, initiate login flow
@@ -48,10 +48,9 @@ onMounted(async () => {
   try {
     await cloudAdapter.login()
     // OAuth will redirect, so we won't reach here
-  } catch (error) {
-    console.error('Login initiation failed:', error)
+  } catch (err) {
     statusMessage.value = 'Anmeldung fehlgeschlagen'
-    errorMessage.value = error.message || 'Bitte versuchen Sie es erneut.'
+    errorMessage.value = err.message || 'Bitte versuchen Sie es erneut.'
   }
 })
 </script>

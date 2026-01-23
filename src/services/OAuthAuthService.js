@@ -72,11 +72,6 @@ export default class OAuthAuthService {
 
       this.config = await response.json();
       this.initialized = true;
-
-      console.log('OAuth configuration loaded:', {
-        issuer: this.config.issuer,
-        clientId: this.config.clientId
-      });
     } catch (error) {
       console.error('Failed to initialize OAuth service:', error);
       throw new Error('OAuth service initialization failed. Please check backend configuration.');
@@ -104,8 +99,6 @@ export default class OAuthAuthService {
     localStorage.setItem('oauth_state', state);
     sessionStorage.setItem('oauth_code_verifier', codeVerifier);
     sessionStorage.setItem('oauth_state', state);
-
-    console.log('OAuth login initiated - state stored:', { state, codeVerifier: codeVerifier.substring(0, 10) + '...' });
 
     // Build authorization URL
     const params = new URLSearchParams({
@@ -143,23 +136,9 @@ export default class OAuthAuthService {
     if (!storedState) {
       storedState = sessionStorage.getItem('oauth_state');
       storedCodeVerifier = sessionStorage.getItem('oauth_code_verifier');
-      console.log('Using sessionStorage fallback for OAuth state');
     }
 
-    console.log('OAuth state verification:', {
-      receivedState: state,
-      storedState: storedState,
-      match: storedState === state,
-      localStorageState: localStorage.getItem('oauth_state'),
-      sessionStorageState: sessionStorage.getItem('oauth_state')
-    });
-
     if (!storedState || storedState !== state) {
-      console.error('State mismatch details:', {
-        storedStateLength: storedState?.length,
-        receivedStateLength: state?.length,
-        storedStateExists: !!storedState
-      });
       throw new Error('Invalid state parameter - possible CSRF attack');
     }
 
@@ -188,16 +167,6 @@ export default class OAuthAuthService {
       }
 
       const tokens = await response.json();
-
-      // Debug: Log what tokens we received from backend
-      console.log('Received tokens from backend:', {
-        hasAccessToken: !!tokens.accessToken,
-        hasRefreshToken: !!tokens.refreshToken,
-        hasIdToken: !!tokens.idToken,
-        expiresIn: tokens.expiresIn,
-        tokenType: tokens.tokenType,
-        allKeys: Object.keys(tokens)
-      });
 
       // Store tokens
       this.storeTokens(tokens);
@@ -228,9 +197,6 @@ export default class OAuthAuthService {
 
     if (tokens.refreshToken) {
       localStorage.setItem('oauth_refresh_token', tokens.refreshToken);
-      console.log('Refresh token stored successfully');
-    } else {
-      console.warn('No refresh token in response - will not be able to refresh session automatically');
     }
 
     if (tokens.expiresIn) {
@@ -324,14 +290,12 @@ export default class OAuthAuthService {
         // Handle specific status codes
         if (response.status === 401 || response.status === 400) {
           // Token is actually invalid - don't retry, logout
-          console.warn('Refresh token invalid, logging out');
           this.logout();
           throw new Error('Session expired - please log in again');
         }
 
         if (response.status === 503 && attempt < maxRetries) {
           // Service unavailable - wait and retry
-          console.log(`Token refresh got 503, retrying (attempt ${attempt + 1}/${maxRetries})`);
           await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
           continue;
         }
@@ -342,7 +306,6 @@ export default class OAuthAuthService {
         lastError = error;
         // Network errors (TypeError) - retry
         if (attempt < maxRetries && (error.name === 'TypeError' || error.message.includes('fetch'))) {
-          console.log(`Token refresh network error, retrying (attempt ${attempt + 1}/${maxRetries})`);
           await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
           continue;
         }
@@ -350,7 +313,6 @@ export default class OAuthAuthService {
     }
 
     // All retries failed - logout and throw
-    console.error('Token refresh failed after retries:', lastError?.message);
     this.logout();
     throw lastError || new Error('Token refresh failed');
   }
