@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/KallistoX/stathaus/compare/v1.6.0...v1.7.0) (2026-01-23)
+
+
+### Features
+
+* **reports:** Add PDF report generation ([1aa2a87](https://github.com/KallistoX/stathaus/commit/1aa2a87a6c2e068c555b58e78837a6c5e8813d73))
+
 # [1.6.0](https://github.com/KallistoX/stathaus/compare/v1.5.0...v1.6.0) (2026-01-23)
 
 
