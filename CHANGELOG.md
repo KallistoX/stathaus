@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/KallistoX/stathaus/compare/v1.1.1...v1.1.2) (2026-01-23)
+
+
+### Bug Fixes
+
+* **auth:** Use sessionStorage flag to prevent duplicate callback processing ([5122d25](https://github.com/KallistoX/stathaus/commit/5122d259f46a2f65aa974e986d5cca790c6cc1ad))
+
 ## [1.1.1](https://github.com/KallistoX/stathaus/compare/v1.1.0...v1.1.1) (2026-01-23)
 
 
