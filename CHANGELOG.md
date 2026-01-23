@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/KallistoX/stathaus/compare/v1.5.0...v1.6.0) (2026-01-23)
+
+
+### Features
+
+* **widgets:** Add customizable dashboard widgets ([dfa6ad2](https://github.com/KallistoX/stathaus/commit/dfa6ad2051f51d2ffd4402b0f19128c169cdfad0))
+
 # [1.5.0](https://github.com/KallistoX/stathaus/compare/v1.4.0...v1.5.0) (2026-01-23)
 
 
