@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/KallistoX/stathaus/compare/v1.0.0...v1.0.1) (2026-01-23)
+
+
+### Bug Fixes
+
+* **ci:** Use semantic-release-action for proper output handling ([f47abf1](https://github.com/KallistoX/stathaus/commit/f47abf1386c307273abfaefaaa8722f44e5cdabc))
+
 # 1.0.0 (2026-01-23)
 
 
