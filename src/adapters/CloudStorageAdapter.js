@@ -5,13 +5,124 @@
  * Requires OAuth authentication.
  */
 
+import { StorageAdapter } from '../storage/StorageAdapter.js';
 import OAuthAuthService from '../services/OAuthAuthService.js';
 
-export default class CloudStorageAdapter {
+export default class CloudStorageAdapter extends StorageAdapter {
   constructor() {
+    super();
     this.authService = new OAuthAuthService();
     this.apiBaseUrl = window.location.origin;
   }
+
+  /**
+   * Get adapter name for display
+   */
+  getName() {
+    return 'Cloud-Speicher';
+  }
+
+  /**
+   * Check if cloud storage can be used (requires authentication)
+   */
+  async canUse() {
+    return this.isAuthenticated();
+  }
+
+  /**
+   * Initialize the adapter
+   */
+  async init() {
+    if (!this.isAuthenticated()) {
+      throw new Error('Nicht angemeldet. Cloud-Speicher erfordert Authentifizierung.');
+    }
+    return true;
+  }
+
+  /**
+   * Load data from cloud storage
+   * @returns {Promise<Object>} Full data structure
+   */
+  async load() {
+    try {
+      const response = await this.authService.authenticatedFetch(
+        `${this.apiBaseUrl}/api/sync/download`
+      );
+
+      if (!response.ok) {
+        throw new Error('Fehler beim Laden der Daten aus der Cloud');
+      }
+
+      const cloudData = await response.json();
+
+      // If cloud is empty, return empty data structure
+      if (!cloudData.meters?.length && !cloudData.readings?.length) {
+        const emptyData = this._getEmptyData();
+        emptyData.settings.storageMode = 'cloud';
+        return emptyData;
+      }
+
+      // Merge cloud data into full data structure
+      return {
+        version: cloudData.version || '1.0',
+        meterTypes: cloudData.meterTypes || [],
+        meters: cloudData.meters || [],
+        readings: cloudData.readings || [],
+        settings: {
+          ...this._getEmptyData().settings,
+          storageMode: 'cloud',
+          ...(cloudData.settings || {})
+        },
+        createdAt: cloudData.createdAt || new Date().toISOString(),
+        lastModified: cloudData.lastModified || new Date().toISOString()
+      };
+    } catch (error) {
+      console.error('Failed to load from cloud:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Save data to cloud storage
+   * @param {Object} data Full data structure
+   * @returns {Promise<Object>} Response metadata
+   */
+  async save(data) {
+    try {
+      const response = await this.authService.authenticatedFetch(
+        `${this.apiBaseUrl}/api/sync/upload`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            version: data.version,
+            meterTypes: data.meterTypes,
+            meters: data.meters,
+            readings: data.readings,
+            settings: data.settings,
+            lastModified: new Date().toISOString()
+          })
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Fehler beim Speichern in der Cloud');
+      }
+
+      const result = await response.json();
+      console.log('Data synced to cloud:', result.metadata);
+
+      return result.metadata;
+    } catch (error) {
+      console.error('Failed to save to cloud:', error);
+      throw error;
+    }
+  }
+
+  // ===== AUTH HELPER METHODS =====
 
   /**
    * Check if user is authenticated
@@ -27,149 +138,6 @@ export default class CloudStorageAdapter {
    */
   async getUserInfo() {
     return this.authService.getUserInfo();
-  }
-
-  /**
-   * Load all meters from cloud storage
-   * @returns {Promise<Array>} Array of meters
-   */
-  async loadMeters() {
-    try {
-      const response = await this.authService.authenticatedFetch(
-        `${this.apiBaseUrl}/api/sync/download`
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to download data from cloud');
-      }
-
-      const data = await response.json();
-      return data.meters || [];
-    } catch (error) {
-      console.error('Failed to load meters from cloud:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Load all readings from cloud storage
-   * @returns {Promise<Array>} Array of readings
-   */
-  async loadReadings() {
-    try {
-      const response = await this.authService.authenticatedFetch(
-        `${this.apiBaseUrl}/api/sync/download`
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to download data from cloud');
-      }
-
-      const data = await response.json();
-      return data.readings || [];
-    } catch (error) {
-      console.error('Failed to load readings from cloud:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Save a meter to cloud storage
-   * @param {Object} meter Meter object
-   * @returns {Promise<Object>} Saved meter
-   */
-  async saveMeter(meter) {
-    // Cloud storage saves full dataset, not individual items
-    // This method should be called as part of a full sync
-    throw new Error('CloudStorageAdapter requires full dataset sync. Use syncAll() instead.');
-  }
-
-  /**
-   * Update a meter in cloud storage
-   * @param {Object} meter Meter object
-   * @returns {Promise<Object>} Updated meter
-   */
-  async updateMeter(meter) {
-    // Cloud storage saves full dataset, not individual items
-    throw new Error('CloudStorageAdapter requires full dataset sync. Use syncAll() instead.');
-  }
-
-  /**
-   * Delete a meter from cloud storage
-   * @param {string} meterId Meter ID
-   * @returns {Promise<void>}
-   */
-  async deleteMeter(meterId) {
-    // Cloud storage saves full dataset, not individual items
-    throw new Error('CloudStorageAdapter requires full dataset sync. Use syncAll() instead.');
-  }
-
-  /**
-   * Save a reading to cloud storage
-   * @param {Object} reading Reading object
-   * @returns {Promise<Object>} Saved reading
-   */
-  async saveReading(reading) {
-    // Cloud storage saves full dataset, not individual items
-    throw new Error('CloudStorageAdapter requires full dataset sync. Use syncAll() instead.');
-  }
-
-  /**
-   * Update a reading in cloud storage
-   * @param {Object} reading Reading object
-   * @returns {Promise<Object>} Updated reading
-   */
-  async updateReading(reading) {
-    // Cloud storage saves full dataset, not individual items
-    throw new Error('CloudStorageAdapter requires full dataset sync. Use syncAll() instead.');
-  }
-
-  /**
-   * Delete a reading from cloud storage
-   * @param {string} readingId Reading ID
-   * @returns {Promise<void>}
-   */
-  async deleteReading(readingId) {
-    // Cloud storage saves full dataset, not individual items
-    throw new Error('CloudStorageAdapter requires full dataset sync. Use syncAll() instead.');
-  }
-
-  /**
-   * Sync all data to cloud
-   * This is the primary method for cloud storage
-   * @param {Array} meters All meters
-   * @param {Array} readings All readings
-   * @returns {Promise<Object>} Sync metadata
-   */
-  async syncAll(meters, readings) {
-    try {
-      const response = await this.authService.authenticatedFetch(
-        `${this.apiBaseUrl}/api/sync/upload`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            meters,
-            readings
-          })
-        }
-      );
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to upload data to cloud');
-      }
-
-      const result = await response.json();
-      console.log('Data synced to cloud:', result.metadata);
-
-      return result.metadata;
-    } catch (error) {
-      console.error('Failed to sync data to cloud:', error);
-      throw error;
-    }
   }
 
   /**
@@ -194,49 +162,19 @@ export default class CloudStorageAdapter {
   }
 
   /**
-   * Download all data from cloud
-   * @returns {Promise<Object>} Object with meters and readings
+   * Sync all data to cloud (convenience method)
+   * @param {Array} meters All meters
+   * @param {Array} readings All readings
+   * @returns {Promise<Object>} Sync metadata
    */
-  async downloadAll() {
-    try {
-      const response = await this.authService.authenticatedFetch(
-        `${this.apiBaseUrl}/api/sync/download`
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to download data from cloud');
-      }
-
-      const data = await response.json();
-
-      return {
-        meters: data.meters || [],
-        readings: data.readings || []
-      };
-    } catch (error) {
-      console.error('Failed to download data from cloud:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Check if cloud has newer data than local
-   * @param {number} localTimestamp Local last updated timestamp
-   * @returns {Promise<boolean>} True if cloud is newer
-   */
-  async hasNewerData(localTimestamp) {
-    try {
-      const metadata = await this.getMetadata();
-
-      if (!metadata.lastUpdated) {
-        return false; // No cloud data exists
-      }
-
-      return metadata.lastUpdated > localTimestamp;
-    } catch (error) {
-      console.error('Failed to check for newer data:', error);
-      return false;
-    }
+  async syncAll(meters, readings) {
+    return this.save({
+      version: '1.0',
+      meterTypes: [],
+      meters,
+      readings,
+      settings: { storageMode: 'cloud' }
+    });
   }
 
   /**

@@ -16,32 +16,57 @@ const tokenExchangeSchema = Joi.object({
 
 /**
  * Validation schema for sync data upload
+ * Accepts full data structure from frontend including meterTypes and settings
  */
 const syncUploadSchema = Joi.object({
-  meters: Joi.array().items(
+  version: Joi.string().allow('', null),
+  meterTypes: Joi.array().items(
     Joi.object({
       id: Joi.string().required(),
       name: Joi.string().required(),
       unit: Joi.string().required(),
-      type: Joi.string().valid('water', 'electricity', 'gas', 'heating', 'other').required(),
-      location: Joi.string().allow('', null),
-      notes: Joi.string().allow('', null),
-      createdAt: Joi.date().iso().required(),
-      updatedAt: Joi.date().iso().required()
+      icon: Joi.string().allow('', null),
+      createdAt: Joi.string().allow('', null)
     })
-  ).required(),
+  ).default([]),
+  meters: Joi.array().items(
+    Joi.object({
+      id: Joi.string().required(),
+      name: Joi.string().required(),
+      typeId: Joi.string().allow('', null),
+      meterNumber: Joi.string().allow('', null),
+      location: Joi.string().allow('', null),
+      // Legacy fields (for backwards compatibility)
+      unit: Joi.string().allow('', null),
+      type: Joi.string().allow('', null),
+      notes: Joi.string().allow('', null),
+      createdAt: Joi.string().allow('', null),
+      updatedAt: Joi.string().allow('', null)
+    })
+  ).default([]),
   readings: Joi.array().items(
     Joi.object({
       id: Joi.string().required(),
       meterId: Joi.string().required(),
       value: Joi.number().required(),
-      date: Joi.date().iso().required(),
+      timestamp: Joi.string().allow('', null),
+      note: Joi.string().allow('', null),
+      photo: Joi.string().allow('', null),
+      // Legacy fields (for backwards compatibility)
+      date: Joi.string().allow('', null),
       notes: Joi.string().allow('', null),
       photoPath: Joi.string().allow('', null),
-      createdAt: Joi.date().iso().required(),
-      updatedAt: Joi.date().iso().required()
+      createdAt: Joi.string().allow('', null),
+      updatedAt: Joi.string().allow('', null)
     })
-  ).required()
+  ).default([]),
+  settings: Joi.object({
+    storageMode: Joi.string().allow('', null),
+    currency: Joi.string().allow('', null),
+    theme: Joi.string().allow('', null)
+  }).default({}),
+  lastModified: Joi.string().allow('', null),
+  createdAt: Joi.string().allow('', null)
 });
 
 /**

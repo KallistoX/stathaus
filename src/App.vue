@@ -10,7 +10,7 @@
             <span class="text-xl font-bold text-gray-900 dark:text-white">StatHaus</span>
           </router-link>
 
-          <!-- Storage Info (Desktop) -->
+          <!-- Center: Storage Info & Sync Status (Desktop) -->
           <div class="hidden md:flex items-center space-x-4">
             <div class="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
               <span>💾</span>
@@ -26,19 +26,59 @@
             />
           </div>
 
-          <!-- Navigation -->
-          <nav class="flex items-center space-x-1">
-            <router-link
-              v-for="item in navItems"
-              :key="item.path"
-              :to="item.path"
-              class="nav-item"
-              :class="{ 'nav-item-active': $route.path === item.path }"
-            >
-              <span class="text-lg">{{ item.icon }}</span>
-              <span class="hidden sm:inline">{{ item.label }}</span>
-            </router-link>
-          </nav>
+          <!-- Right side: Navigation + User Profile -->
+          <div class="flex items-center space-x-4">
+            <!-- Navigation -->
+            <nav class="flex items-center space-x-1">
+              <router-link
+                v-for="item in navItems"
+                :key="item.path"
+                :to="item.path"
+                class="nav-item"
+                :class="{ 'nav-item-active': $route.path === item.path }"
+              >
+                <span class="text-lg">{{ item.icon }}</span>
+                <span class="hidden sm:inline">{{ item.label }}</span>
+              </router-link>
+            </nav>
+
+            <!-- User Profile / Login Area -->
+            <div class="flex items-center">
+              <!-- When logged in: User avatar + logout -->
+              <div v-if="isLoggedIn" class="flex items-center space-x-2">
+                <div class="flex items-center space-x-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                  <div class="w-7 h-7 rounded-full bg-primary-500 flex items-center justify-center text-white text-sm font-medium">
+                    {{ userInitial }}
+                  </div>
+                  <span class="hidden lg:block text-sm font-medium text-gray-700 dark:text-gray-300 max-w-[120px] truncate">
+                    {{ userDisplayName }}
+                  </span>
+                </div>
+                <button
+                  @click="handleLogout"
+                  class="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  title="Abmelden"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                </button>
+              </div>
+
+              <!-- When logged out: Login button -->
+              <button
+                v-else
+                @click="handleLogin"
+                :disabled="authLoading"
+                class="flex items-center space-x-2 px-4 py-2 bg-primary-600 dark:bg-primary-700 text-white rounded-lg hover:bg-primary-700 dark:hover:bg-primary-600 transition-colors disabled:opacity-50"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                </svg>
+                <span class="hidden sm:inline">{{ authLoading ? 'Lädt...' : 'Anmelden' }}</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </header>
@@ -75,29 +115,14 @@
       </div>
     </footer>
 
-    <!-- File Recovery Modal -->
-    <FileRecoveryModal
-      v-if="showFileRecoveryModal"
-      :file-name="missingFileName"
-      @select-file="dataStore.onFileRecoverySelectFile"
-      @create-new="dataStore.onFileRecoveryCreateNew"
-      @use-local="dataStore.onFileRecoveryUseLocal"
-    />
-
-    <!-- Permission Request Modal -->
-    <PermissionRequestModal
-      v-if="showPermissionModal"
-      :file-name="permissionState?.fileName"
-      @granted="dataStore.onPermissionGranted"
-      @select-different="dataStore.onPermissionSelectDifferent"
-      @use-local="dataStore.onPermissionUseLocal"
-    />
-
-    <!-- Permission Denied Banner -->
-    <PermissionDeniedBanner
-      v-if="showPermissionBanner"
-      @retry="dataStore.retryPermission"
-      @dismiss="dataStore.dismissPermissionBanner"
+    <!-- Conflict Resolution Modal -->
+    <ConflictResolutionModal
+      v-if="showConflictModal"
+      :local-data="conflictLocalData"
+      :remote-data="conflictRemoteData"
+      @resolve-local="dataStore.resolveConflictWithLocal"
+      @resolve-remote="dataStore.resolveConflictWithRemote"
+      @cancel="dataStore.cancelConflictResolution"
     />
   </div>
 </template>
@@ -105,12 +130,12 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useDataStore } from '@/stores/dataStore'
-import FileRecoveryModal from '@/components/FileRecoveryModal.vue'
-import PermissionRequestModal from '@/components/PermissionRequestModal.vue'
-import PermissionDeniedBanner from '@/components/PermissionDeniedBanner.vue'
 import SyncStatusIndicator from '@/components/SyncStatusIndicator.vue'
+import ConflictResolutionModal from '@/components/ConflictResolutionModal.vue'
+import CloudStorageAdapter from '@/adapters/CloudStorageAdapter.js'
 
 const dataStore = useDataStore()
+const cloudAdapter = new CloudStorageAdapter()
 
 const navItems = [
   { path: '/', icon: '📊', label: 'Dashboard' },
@@ -118,27 +143,78 @@ const navItems = [
   { path: '/settings', icon: '⚙️', label: 'Einstellungen' }
 ]
 
+// Auth state
+const isLoggedIn = ref(false)
+const userInfo = ref(null)
+const authLoading = ref(false)
+
+const userInitial = computed(() => {
+  const name = userInfo.value?.name || userInfo.value?.email || 'U'
+  return name.charAt(0).toUpperCase()
+})
+
+const userDisplayName = computed(() => {
+  return userInfo.value?.name || userInfo.value?.email || 'User'
+})
+
+// Store state
 const isLoading = computed(() => dataStore.isLoading)
 const error = computed(() => dataStore.error)
 const storageName = computed(() => dataStore.storageName)
 const storageMode = computed(() => dataStore.storageMode)
-const showFileRecoveryModal = computed(() => dataStore.showFileRecoveryModal)
-const missingFileName = computed(() => dataStore.missingFileName)
-const showPermissionModal = computed(() => dataStore.showPermissionModal)
-const showPermissionBanner = computed(() => dataStore.showPermissionBanner)
-const permissionState = computed(() => dataStore.permissionState)
 
 // Sync state
 const syncStatus = computed(() => dataStore.syncStatus)
 const syncError = computed(() => dataStore.syncError)
 const lastSyncTime = computed(() => dataStore.lastSyncTime)
 
+// Conflict resolution state
+const showConflictModal = computed(() => dataStore.showConflictModal)
+const conflictLocalData = computed(() => dataStore.conflictLocalData)
+const conflictRemoteData = computed(() => dataStore.conflictRemoteData)
+
+async function handleLogin() {
+  authLoading.value = true
+  try {
+    await cloudAdapter.login()
+    // OAuth will redirect, so we won't reach here immediately
+  } catch (err) {
+    console.error('Login failed:', err)
+    authLoading.value = false
+  }
+}
+
+async function handleLogout() {
+  try {
+    await cloudAdapter.logout()
+    isLoggedIn.value = false
+    userInfo.value = null
+    // Switch back to IndexedDB and clear data
+    await dataStore.switchToIndexedDB(true)
+  } catch (err) {
+    console.error('Logout failed:', err)
+  }
+}
+
 async function retryInit() {
   await dataStore.initialize()
 }
 
+async function checkAuthState() {
+  isLoggedIn.value = cloudAdapter.isAuthenticated()
+  if (isLoggedIn.value) {
+    try {
+      userInfo.value = await cloudAdapter.getUserInfo()
+    } catch (err) {
+      console.error('Failed to load user info:', err)
+      isLoggedIn.value = false
+    }
+  }
+}
+
 onMounted(async () => {
   await dataStore.initialize()
+  await checkAuthState()
 })
 </script>
 

@@ -1,5 +1,3 @@
-import { IndexedDBAdapter } from './IndexedDBAdapter.js'
-
 /**
  * Central data manager that handles all data operations
  * Supports auto-save, event listeners, and adapter switching
@@ -10,17 +8,14 @@ export class DataManager {
     this.data = null
     this.autoSaveTimeout = null
     this.listeners = new Set()
-    this.permissionErrorListeners = new Set()
     this.saveInProgress = false
-    this.fallbackAdapter = null
 
     // Save before page unload to prevent data loss
     if (typeof window !== 'undefined') {
       window.addEventListener('beforeunload', () => {
-        // Use synchronous method if pending save exists
         if (this.autoSaveTimeout) {
           clearTimeout(this.autoSaveTimeout)
-          // Force synchronous save on unload
+          // Attempt sync save for IndexedDB
           this._saveSync()
         }
       })
@@ -48,30 +43,28 @@ export class DataManager {
       await newAdapter.init()
     }
 
+    // Determine the storage mode based on adapter type
+    const adapterName = newAdapter.constructor.name
+    const expectedMode = adapterName === 'CloudStorageAdapter' ? 'cloud' : 'indexeddb'
+
     if (loadFromNew) {
-      // Load data from the new adapter (used when opening existing file)
+      // Load data from the new adapter
       this.adapter = newAdapter
       this.data = await newAdapter.load()
 
-      // Update storage mode in settings to match the adapter being used
-      const expectedMode = newAdapter.constructor.name === 'FileSystemAdapter' ? 'filesystem' : 'indexeddb'
-      const oldMode = this.data.settings.storageMode
+      const oldMode = this.data.settings?.storageMode
       const modeChanged = oldMode !== expectedMode
 
       this.data.settings.storageMode = expectedMode
 
       if (modeChanged) {
         console.log(`DataManager: Updated storage mode from ${oldMode} to ${expectedMode}`)
-        // Schedule save instead of immediate save to avoid blocking
         this._scheduleAutoSave()
       }
     } else {
       // Migrate data from current adapter to new adapter
       const exportedData = JSON.parse(JSON.stringify(this.data))
-
-      // Update storage mode in settings
-      exportedData.settings.storageMode =
-        newAdapter.constructor.name === 'FileSystemAdapter' ? 'filesystem' : 'indexeddb'
+      exportedData.settings.storageMode = expectedMode
 
       // Save to new adapter
       await newAdapter.save(exportedData)
@@ -417,19 +410,11 @@ export class DataManager {
     try {
       this.saveInProgress = true
       clearTimeout(this.autoSaveTimeout)
+      this.data.lastModified = new Date().toISOString()
       await this.adapter.save(this.data)
       this._notifyListeners()
     } catch (error) {
       console.error('Error saving data:', error)
-
-      // Check if this is a permission error
-      if (this._isPermissionError(error)) {
-        console.warn('Permission error detected, falling back to IndexedDB')
-        await this._fallbackSave()
-        this._notifyPermissionError(error)
-        return // Don't throw - we saved to fallback
-      }
-
       throw error
     } finally {
       this.saveInProgress = false
@@ -437,60 +422,7 @@ export class DataManager {
   }
 
   /**
-   * Check if an error is permission-related
-   */
-  _isPermissionError(error) {
-    const message = error.message || ''
-    return (
-      message.includes('Schreibberechtigung') ||
-      message.includes('Leseberechtigung') ||
-      message.includes('permission') ||
-      error.name === 'NotAllowedError' ||
-      error.name === 'SecurityError'
-    )
-  }
-
-  /**
-   * Save to IndexedDB as a fallback when file system permission fails
-   */
-  async _fallbackSave() {
-    try {
-      if (!this.fallbackAdapter) {
-        this.fallbackAdapter = new IndexedDBAdapter()
-        await this.fallbackAdapter.init()
-      }
-      await this.fallbackAdapter.save(this.data)
-      console.log('Data saved to IndexedDB fallback')
-    } catch (fallbackError) {
-      console.error('Fallback save to IndexedDB also failed:', fallbackError)
-      throw fallbackError
-    }
-  }
-
-  /**
-   * Register a permission error listener
-   * @returns Unsubscribe function
-   */
-  onPermissionError(callback) {
-    this.permissionErrorListeners.add(callback)
-    return () => this.permissionErrorListeners.delete(callback)
-  }
-
-  /**
-   * Notify permission error listeners
-   */
-  _notifyPermissionError(error) {
-    this.permissionErrorListeners.forEach(callback => {
-      try {
-        callback(error)
-      } catch (err) {
-        console.error('Error in permission error listener:', err)
-      }
-    })
-  }
-
-  /**
-   * Synchronous save for page unload (uses synchronous IndexedDB)
+   * Synchronous save for page unload (for IndexedDB only)
    * Note: This is a last resort - the async saves should normally complete
    */
   _saveSync() {

@@ -57,6 +57,7 @@ async function saveUserData(userId, data) {
     const metadata = {
       lastUpdated: timestamp,
       size: Buffer.byteLength(dataJson, 'utf8'),
+      meterTypesCount: data.meterTypes?.length || 0,
       metersCount: data.meters?.length || 0,
       readingsCount: data.readings?.length || 0
     };
@@ -65,6 +66,7 @@ async function saveUserData(userId, data) {
 
     logger.info('User data saved successfully', {
       userId,
+      meterTypesCount: metadata.meterTypesCount,
       metersCount: metadata.metersCount,
       readingsCount: metadata.readingsCount,
       size: metadata.size

@@ -54,10 +54,14 @@ router.get('/download', requireAuth, async (req, res, next) => {
     const data = await getUserData(userId);
 
     if (!data) {
-      // Return empty data if none exists
+      // Return empty data structure if none exists
       return res.json({
+        version: '1.0',
+        meterTypes: [],
         meters: [],
-        readings: []
+        readings: [],
+        settings: {},
+        lastModified: null
       });
     }
 
