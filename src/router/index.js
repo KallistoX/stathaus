@@ -3,6 +3,7 @@ import DashboardView from '@/views/DashboardView.vue'
 import MetersView from '@/views/MetersView.vue'
 import MeterDetailView from '@/views/MeterDetailView.vue'
 import SettingsView from '@/views/SettingsView.vue'
+import OAuthCallback from '@/components/OAuthCallback.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -30,6 +31,12 @@ const router = createRouter({
       name: 'settings',
       component: SettingsView,
       meta: { title: 'Einstellungen' }
+    },
+    {
+      path: '/auth/callback',
+      name: 'oauth-callback',
+      component: OAuthCallback,
+      meta: { title: 'Completing Sign-in' }
     }
   ]
 })
