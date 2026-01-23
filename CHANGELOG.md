@@ -1,3 +1,10 @@
+## [1.1.5](https://github.com/KallistoX/stathaus/compare/v1.1.4...v1.1.5) (2026-01-23)
+
+
+### Bug Fixes
+
+* **backend:** Remove app-level rate limiting to prevent pod restarts ([b555a44](https://github.com/KallistoX/stathaus/commit/b555a44017dfd9b9de915eb6012bcff50762cf23))
+
 ## [1.1.4](https://github.com/KallistoX/stathaus/compare/v1.1.3...v1.1.4) (2026-01-23)
 
 
