@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/KallistoX/stathaus/compare/v1.2.0...v1.2.1) (2026-01-23)
+
+
+### Bug Fixes
+
+* Trigger cloud data sync after auto-login and show meter location ([70ffb13](https://github.com/KallistoX/stathaus/commit/70ffb1378e0fcdcfd79329749e9b73ea89177ada))
+
 # [1.2.0](https://github.com/KallistoX/stathaus/compare/v1.1.5...v1.2.0) (2026-01-23)
 
 
