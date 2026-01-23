@@ -19,6 +19,8 @@ export default {
       ]
     ],
     'subject-case': [2, 'always', 'sentence-case'],
-    'header-max-length': [2, 'always', 100]
+    'header-max-length': [2, 'always', 100],
+    // Disable body line length to allow semantic-release changelog URLs
+    'body-max-line-length': [0, 'always', Infinity]
   }
 }
