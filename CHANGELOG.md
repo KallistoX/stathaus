@@ -1,3 +1,10 @@
+## [1.7.1](https://github.com/KallistoX/stathaus/compare/v1.7.0...v1.7.1) (2026-01-23)
+
+
+### Bug Fixes
+
+* Add data migration for groups, tariffs, and dashboardWidgets ([cd2b120](https://github.com/KallistoX/stathaus/commit/cd2b12026d86eeda7d4873f26e7677990f27a170))
+
 # [1.7.0](https://github.com/KallistoX/stathaus/compare/v1.6.0...v1.7.0) (2026-01-23)
 
 
