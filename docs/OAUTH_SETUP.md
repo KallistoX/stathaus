@@ -6,6 +6,10 @@ StatHaus supports cloud synchronization using any OAuth2/OIDC-compliant authenti
 
 StatHaus uses OAuth2 with OIDC (OpenID Connect) for secure user authentication. The backend automatically discovers provider endpoints using the standard `.well-known/openid-configuration` discovery mechanism.
 
+### v1.2.0 Features
+- **Auto-Login**: If the user has a valid session, they are automatically logged in on app start
+- **Dashboard Entrypoint**: Authenticated users land directly on the dashboard
+
 ## Supported Providers
 
 StatHaus works with **any** OAuth2/OIDC-compliant provider:
@@ -333,7 +337,7 @@ After deployment:
 1. **HTTPS Only**: Both StatHaus and OAuth provider must use HTTPS
 2. **PKCE**: Authorization code flow uses PKCE for additional security
 3. **State Parameter**: CSRF protection via state parameter validation
-4. **Token Storage**: Tokens stored in browser localStorage (encrypted by browser)
+4. **Token Storage**: Tokens stored in browser localStorage (consider secure cookies for sensitive deployments)
 5. **Token Refresh**: Automatic token refresh 5 minutes before expiry
 6. **Client Secret**: Stored in Kubernetes secret (not in code)
 7. **Scopes**: Request minimum scopes needed (`openid profile email`)

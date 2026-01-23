@@ -1,198 +1,260 @@
-# 🚀 StatHaus Quick Start
+# StatHaus Quick Start
 
-## Für VSCode + Docker Desktop (empfohlen für Mac)
+## For VSCode + Docker Desktop (Recommended for Mac)
 
-### 1. Projekt öffnen
+### 1. Open Project
 ```bash
 cd stathaus
 code .
 ```
 
-### 2. Docker Container starten
+### 2. Start Docker Container
 ```bash
 docker-compose up
 ```
 
-✅ App läuft auf: http://localhost:5173
-✅ Hot-reload aktiv (Änderungen werden sofort sichtbar)
+App runs at: http://localhost:5173
+Hot-reload active (changes are visible immediately)
 
 ### 3. Development
-- Ändere Code in `src/`
-- Browser lädt automatisch neu
-- Komponenten in `src/components/`
+- Edit code in `src/`
+- Browser reloads automatically
+- Components in `src/components/`
 - Views in `src/views/`
-- Storage-Logik in `src/storage/`
+- Local storage logic in `src/storage/`
+- Cloud storage in `src/adapters/`
+- Services in `src/services/`
 
-### 4. Container stoppen
+### 4. Stop Container
 ```bash
-# Ctrl+C im Terminal
-# Oder:
+# Ctrl+C in terminal
+# Or:
 docker-compose down
 ```
 
-## Wichtige Befehle
+## Common Commands
 
 ```bash
-# Container im Hintergrund starten
+# Start container in background
 docker-compose up -d
 
-# Logs anschauen
+# View logs
 docker-compose logs -f
 
-# Container neu bauen (nach package.json Änderungen)
+# Rebuild container (after package.json changes)
 docker-compose up --build
 
-# Container aufräumen
+# Clean up containers
 docker-compose down -v
 ```
 
-## Production Build testen
+## Test Production Build
 
 ```bash
-# Production Image bauen
+# Build production image
 docker build -t stathaus:latest .
 
-# Production Container starten
+# Start production container
 docker run -p 8080:80 stathaus:latest
 ```
 
-✅ Production App: http://localhost:8080
+Production app: http://localhost:8080
 
-## Ohne Docker
+## Without Docker
 
 ```bash
-# Dependencies installieren
+# Install dependencies
 npm install
 
-# Dev Server
+# Dev server
 npm run dev
 
-# Production Build
+# Production build
 npm run build
 
-# Production Preview
+# Production preview
 npm run preview
 ```
 
-## Projekt-Struktur verstehen
+## Backend Development
+
+### Start Redis Locally
+```bash
+# With Docker
+docker run -d -p 6379:6379 --name redis redis:alpine
+
+# Test connection
+redis-cli ping
+```
+
+### Start Backend
+```bash
+cd backend
+cp .env.example .env
+# Edit .env with your settings
+npm install
+npm run dev
+```
+
+Backend runs at: http://localhost:3000
+
+### Test Backend Endpoints
+```bash
+# Health check
+curl http://localhost:3000/api/health
+
+# Readiness (Redis + OAuth)
+curl http://localhost:3000/api/health/ready
+```
+
+## Project Structure
 
 ```
 src/
-├── storage/              ← 🔑 WICHTIG: Alle Speicher-Logik
-│   ├── StorageAdapter.js      # Abstract Base Class
-│   ├── IndexedDBAdapter.js    # Browser-Speicher
-│   ├── FileSystemAdapter.js   # Dateisystem
-│   └── DataManager.js         # Zentrale Datenverwaltung
+├── storage/              # Local Storage Logic
+│   ├── StorageAdapter.js      # Abstract base class
+│   ├── IndexedDBAdapter.js    # Browser storage
+│   └── DataManager.js         # Central data management
 │
-├── stores/               ← Pinia State Management
-│   └── dataStore.js           # Globaler State
+├── adapters/             # Cloud Storage
+│   └── CloudStorageAdapter.js # Cloud sync adapter
 │
-├── views/                ← Seiten
-│   ├── DashboardView.vue      # Hauptübersicht
-│   ├── MetersView.vue         # Zählerliste
-│   ├── MeterDetailView.vue    # Einzelner Zähler + Chart
-│   └── SettingsView.vue       # Einstellungen + Storage
+├── services/             # Services
+│   └── OAuthAuthService.js    # OAuth2/OIDC service
 │
-├── components/           ← Wiederverwendbare Komponenten
+├── stores/               # Pinia State Management
+│   └── dataStore.js           # Global state
+│
+├── views/                # Pages
+│   ├── DashboardView.vue      # Main overview (start page)
+│   ├── LaunchView.vue         # Launch/Loading screen
+│   ├── MetersView.vue         # Meter list
+│   ├── MeterDetailView.vue    # Single meter + chart
+│   └── SettingsView.vue       # Settings + storage
+│
+├── components/           # Reusable Components
 │   ├── AddMeterModal.vue
 │   ├── AddMeterTypeModal.vue
-│   └── QuickAddReadingModal.vue
+│   ├── ConflictResolutionModal.vue
+│   ├── ContinuousMeterWarningModal.vue
+│   ├── EditMeterModal.vue
+│   ├── OAuthCallback.vue
+│   ├── QuickAddReadingModal.vue
+│   └── SyncStatusIndicator.vue
 │
-└── router/               ← Vue Router
+└── router/               # Vue Router
     └── index.js
 ```
 
-## Features testen
+## Testing Features
 
-### 1. IndexedDB (Browser-Speicher)
-- ✅ Funktioniert sofort beim ersten Start
-- ✅ Daten bleiben erhalten nach Page Reload
-- ⚠️ Browser-Cache löschen entfernt Daten!
+### 1. IndexedDB (Browser Storage)
+- Works immediately on first start
+- Data persists after page reload
+- Clearing browser cache removes data!
 
-**Testen:**
-1. App öffnen
-2. Zählertyp anlegen (Einstellungen)
-3. Zähler hinzufügen
-4. Ablesung erfassen
-5. Seite neu laden → Daten sind noch da
+**Test:**
+1. Open app
+2. Create meter type (Settings)
+3. Add meter
+4. Record reading
+5. Reload page → Data still there
 
-### 2. File System API (Dateisystem)
-- ✅ Nur in Chrome/Edge Desktop
-- ✅ Datei kann in Cloud-Ordner liegen
+### 2. File System API
+- Chrome/Edge Desktop only
+- File can be in cloud folder
 
-**Testen:**
-1. Einstellungen → "Neue Datei"
-2. Wähle z.B. `~/Documents/test.json`
-3. Erfasse Daten
-4. Öffne `test.json` in Editor → Daten sind da!
-5. Ändere Datei extern → Reload → Änderungen geladen
+**Test:**
+1. Settings → "New File"
+2. Select e.g. `~/Documents/test.json`
+3. Record data
+4. Open `test.json` in editor → Data is there!
+5. Modify file externally → Reload → Changes loaded
 
 ### 3. Export/Import
-**JSON Export testen:**
-1. Erfasse einige Daten
-2. Einstellungen → "Als JSON exportieren"
-3. Datei wird heruntergeladen
 
-**Import testen:**
-1. Einstellungen → "JSON importieren"
-2. Wähle die exportierte Datei
-3. Daten werden wiederhergestellt
+**JSON Export:**
+1. Record some data
+2. Settings → "Export as JSON"
+3. File downloads
 
-## Browser DevTools nutzen
+**Import:**
+1. Settings → "Import JSON"
+2. Select exported file
+3. Data restored
 
-### IndexedDB inspizieren
-1. Chrome DevTools öffnen (F12)
+### 4. Cloud Sync
+- Requires OAuth provider setup (see docs/OAUTH_SETUP.md)
+- Requires backend deployment
+
+**Test locally (with backend):**
+1. Start backend (see above)
+2. Configure OAuth provider
+3. Settings → Cloud Sync → Sign in
+4. Data syncs automatically
+5. Sign in on another browser/device → Data synchronized
+
+**Cloud Sync Features:**
+- Automatic sync on changes
+- Conflict detection and resolution
+- Auto-login when authenticated (v1.2.0)
+
+## Browser DevTools
+
+### Inspect IndexedDB
+1. Open Chrome DevTools (F12)
 2. Tab "Application"
-3. Links: "Storage" → "IndexedDB" → "StatHausDB"
-4. Siehe gespeicherte Daten
+3. Left: "Storage" → "IndexedDB" → "StatHausDB"
+4. View stored data
 
-### Service Worker checken
+### Check Service Worker
 1. Chrome DevTools → "Application"
 2. "Service Workers"
-3. Siehe PWA Status
+3. See PWA status
 
-## Häufige Probleme
+## Common Issues
 
-### Port 5173 bereits belegt
+### Port 5173 already in use
 ```bash
-# Container stoppen
+# Stop container
 docker-compose down
 
-# Oder anderen Port nutzen (docker-compose.yml ändern)
+# Or use different port (edit docker-compose.yml)
 ports:
-  - "3000:5173"  # 3000 statt 5173
+  - "3000:5173"  # 3000 instead of 5173
 ```
 
-### Änderungen werden nicht geladen
+### Changes not loading
 ```bash
-# Hard Refresh im Browser
+# Hard refresh in browser
 Cmd+Shift+R (Mac)
 Ctrl+Shift+R (Windows)
 
-# Oder Container neu bauen
+# Or rebuild container
 docker-compose up --build
 ```
 
-### "Module not found" Fehler
+### "Module not found" error
 ```bash
-# Dependencies neu installieren
+# Reinstall dependencies
 docker-compose down
 docker volume rm stathaus_node_modules
 docker-compose up --build
 ```
 
-## Nächste Schritte
+## Next Steps
 
-1. **Icons erstellen**: Siehe `public/ICONS_README.md`
-2. **Code anpassen**: Starte mit `src/views/DashboardView.vue`
-3. **Styling ändern**: `tailwind.config.js` für Farben
-4. **Features erweitern**: Neue Charts in `MeterDetailView.vue`
+1. **Create icons**: See `public/ICONS_README.md`
+2. **Customize code**: Start with `src/views/DashboardView.vue`
+3. **Change styling**: `tailwind.config.js` for colors
+4. **Add features**: New charts in `MeterDetailView.vue`
 
-## Support
+## Resources
 
-Bei Fragen siehe README.md oder:
 - Vue 3 Docs: https://vuejs.org
 - Tailwind CSS: https://tailwindcss.com
 - ECharts: https://echarts.apache.org
+- Backend API: See `backend/README.md`
+- OAuth Setup: See `docs/OAUTH_SETUP.md`
 
-Happy Coding! 🎉
+Happy Coding!

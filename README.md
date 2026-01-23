@@ -1,68 +1,78 @@
-# 🏠 StatHaus - Zählerstand-Erfassung
+# StatHaus - Meter Reading Tracker
 
-Eine Progressive Web App zur Erfassung und Verwaltung von Zählerständen für Strom, Wasser, Gas und mehr. Entwickelt mit Vue 3, komplett client-seitig - deine Daten bleiben bei dir!
+A Progressive Web App for tracking and managing meter readings for electricity, water, gas, and more. Built with Vue 3, fully client-side by default - your data stays with you!
 
-## ✨ Features
+## Features
 
-### 📊 Flexible Zählerverwaltung
-- **Dynamische Zählertypen**: Erstelle eigene Typen (Strom, Wasser, Gas, Heizöl, Solar, etc.)
-- **Unbegrenzte Zähler**: Verwalte beliebig viele Zähler pro Typ
-- **Detaillierte Ablesungen**: Erfasse Werte mit Zeitstempel und Notizen
+### Flexible Meter Management
+- **Dynamic Meter Types**: Create custom types (Electricity, Water, Gas, Heating Oil, Solar, etc.)
+- **Unlimited Meters**: Manage any number of meters per type
+- **Detailed Readings**: Record values with timestamps and notes
 
-### 💾 Drei Speicher-Modi
+### Three Storage Modes
 
-#### 🔵 Browser-Speicher (IndexedDB) - Standard
-- ✅ Einfach und schnell
-- ✅ Keine Konfiguration nötig
-- ✅ Funktioniert offline
-- ⚠️ Daten nur auf diesem Gerät
+#### Browser Storage (IndexedDB) - Default
+- Simple and fast
+- No configuration required
+- Works offline
+- Data stays on this device only
 
-#### 📁 Dateisystem-Modus
-- ✅ Geräteübergreifende Synchronisation
-- ✅ Cloud-Sync möglich (Nextcloud, iCloud, Google Drive)
-- ✅ Volle Kontrolle über deine Daten
-- ✅ Manuelle Backups
+#### File System Mode
+- Cross-device synchronization
+- Cloud sync possible (Nextcloud, iCloud, Google Drive)
+- Full control over your data
+- Manual backups
 
-**Beispiel Nextcloud-Workflow:**
+**Example Nextcloud Workflow:**
 ```
-1. Auf Device 1: Datei in ~/Nextcloud/stathaus-data.json erstellen
-2. App nutzt diese Datei direkt
-3. Nextcloud synct automatisch
-4. Auf Device 2: Gleiche Datei öffnen → synchronisiert!
+1. On Device 1: Create file at ~/Nextcloud/stathaus-data.json
+2. App uses this file directly
+3. Nextcloud syncs automatically
+4. On Device 2: Open same file → synchronized!
 ```
 
-#### ☁️ Cloud-Sync mit OAuth (Empfohlen)
-- ✅ Automatische Synchronisation
-- ✅ Sichere Authentifizierung (Authentik, Keycloak, Auth0, Google, etc.)
-- ✅ Geräteübergreifend verfügbar
-- ✅ Keine manuelle Dateiverwaltung
-- ✅ Funktioniert auf allen Geräten (iOS, Android, Desktop)
+#### Cloud Sync with OAuth (Recommended)
+- Automatic synchronization
+- Secure authentication (Authentik, Keycloak, Auth0, Google, etc.)
+- Available across devices
+- No manual file management
+- Works on all devices (iOS, Android, Desktop)
 
 **Workflow:**
 ```
-1. Einstellungen → Cloud-Sync → "Anmelden"
-2. Mit OAuth-Provider einloggen (z.B. Authentik)
-3. Daten werden automatisch synchronisiert
-4. Auf anderem Gerät anmelden → Daten sofort verfügbar!
+1. Settings → Cloud Sync → "Sign in"
+2. Log in with OAuth provider (e.g., Authentik)
+3. Data syncs automatically
+4. Sign in on another device → Data instantly available!
 ```
 
-### 📈 Visualisierung
-- Interaktive Charts mit ECharts
-- Touch-optimiert für Mobile
-- Zoom & Pan Support
-- Verlaufs-Anzeige
+### Auto-Login & Dashboard Start (v1.2.0)
+- Automatic login when cloud sync session is active
+- Dashboard as default start page
+- Seamless user experience
 
-### 📦 Export & Import
-- **JSON Export**: Vollständiges Backup
-- **CSV Export**: Für Excel/LibreOffice
-- **JSON Import**: Backup wiederherstellen
+### Continuous Meter Validation (v1.2.0)
+- Warning on decreasing meter values
+- Prevents accidental incorrect entries
+- Confirmation dialog for unusual values
 
-### 🚀 Progressive Web App
-- Installierbar auf Desktop & Mobile
-- Funktioniert offline
-- Native App-Experience
+### Visualization
+- Interactive charts with ECharts
+- Touch-optimized for mobile
+- Zoom & Pan support
+- History display
 
-## ☁️ Production Deployment (Kubernetes)
+### Export & Import
+- **JSON Export**: Complete backup
+- **CSV Export**: For Excel/LibreOffice
+- **JSON Import**: Restore backup
+
+### Progressive Web App
+- Installable on desktop & mobile
+- Works offline
+- Native app experience
+
+## Production Deployment (Kubernetes)
 
 StatHaus can be deployed to Kubernetes with full OAuth2/OIDC support and Redis-backed cloud sync.
 
@@ -168,7 +178,7 @@ GitHub Actions automatically builds and pushes Docker images to GitHub Container
 
 **Image tags**:
 - `latest` - Latest main branch
-- `v1.0.0` - Semantic version tags
+- `v1.2.0` - Semantic version tags
 - `main-abc123` - Commit SHA
 
 ### Updating to New Version
@@ -176,7 +186,7 @@ GitHub Actions automatically builds and pushes Docker images to GitHub Container
 ```bash
 # With Ansible
 ansible-playbook ansible/playbooks/25-stathaus.yml \
-  -e image_tag=v1.0.1
+  -e image_tag=v1.2.0
 ```
 
 ### Production Features
@@ -191,7 +201,7 @@ ansible-playbook ansible/playbooks/25-stathaus.yml \
 - **OAuth2/OIDC**: Generic support for any provider
 - **Redis storage**: Fast, scalable data persistence
 - **Token management**: Automatic refresh, JWT validation
-- **Security**: Rate limiting, input validation, security headers
+- **Security**: Input validation, security headers
 - **Logging**: Structured logging with Winston
 - **Health checks**: `/api/health` and `/api/health/ready`
 - **Resource limits**: CPU 200m, Memory 256Mi
@@ -208,8 +218,8 @@ StatHaus provides secure cloud synchronization using OAuth2/OIDC authentication:
 
 1. Deploy StatHaus to production
 2. Access app at https://stathaus.your-domain.com
-3. Go to Settings → Cloud-Sync
-4. Click "Anmelden" (Sign in)
+3. Go to Settings → Cloud Sync
+4. Click "Sign in"
 5. Authenticate with your OAuth provider
 6. Data automatically syncs to Redis
 7. Use on multiple devices with same account
@@ -279,7 +289,7 @@ kubectl logs -n cert-manager -l app=cert-manager
 
 See [backend/README.md](backend/README.md) for detailed backend configuration and [docs/OAUTH_SETUP.md](docs/OAUTH_SETUP.md) for OAuth provider setup.
 
-## 🛠️ Technologie-Stack
+## Technology Stack
 
 **Frontend**:
 - **Framework**: Vue 3 (Composition API)
@@ -298,59 +308,59 @@ See [backend/README.md](backend/README.md) for detailed backend configuration an
 - **Database**: Redis (ioredis client)
 - **Validation**: Joi
 - **Logging**: Winston
-- **Security**: Helmet, express-rate-limit
+- **Security**: Helmet
 - **Deployment**: Multi-stage Docker builds
 
-## 🚀 Schnellstart mit Docker
+## Quick Start with Docker
 
-### Voraussetzungen
-- Docker Desktop (für Mac)
-- VSCode (empfohlen)
+### Prerequisites
+- Docker Desktop (for Mac)
+- VSCode (recommended)
 
-### Development starten
+### Start Development
 
-1. **Repository klonen** (oder Ordner öffnen)
+1. **Clone repository** (or open folder)
 ```bash
 cd stathaus
 ```
 
-2. **Docker Container starten**
+2. **Start Docker container**
 ```bash
 docker-compose up
 ```
 
-3. **App öffnen**
+3. **Open app**
 ```
 http://localhost:5173
 ```
 
-Die App lädt automatisch neu bei Code-Änderungen (Hot Reload)!
+The app automatically reloads on code changes (Hot Reload)!
 
 ### Production Build
 
 ```bash
-# Production Image bauen
+# Build production image
 docker build -t stathaus:latest .
 
-# Container starten
+# Start container
 docker run -p 8080:80 stathaus:latest
 ```
 
-App ist verfügbar unter `http://localhost:8080`
+App available at `http://localhost:8080`
 
-## 💻 Entwicklung ohne Docker
+## Development without Docker
 
 ### Installation
 ```bash
 npm install
 ```
 
-### Dev Server starten
+### Start Dev Server
 ```bash
 npm run dev
 ```
 
-### Production Build erstellen
+### Create Production Build
 ```bash
 npm run build
 ```
@@ -360,34 +370,40 @@ npm run build
 npm run preview
 ```
 
-## 📁 Projekt-Struktur
+## Project Structure
 
 ```
 stathaus/
 ├── src/                      # Frontend (Vue PWA)
-│   ├── assets/               # CSS und statische Assets
-│   ├── components/           # Vue Komponenten
+│   ├── assets/               # CSS and static assets
+│   ├── components/           # Vue Components
 │   │   ├── AddMeterModal.vue
 │   │   ├── AddMeterTypeModal.vue
+│   │   ├── ConflictResolutionModal.vue
+│   │   ├── ContinuousMeterWarningModal.vue
+│   │   ├── EditMeterModal.vue
 │   │   ├── OAuthCallback.vue
-│   │   └── QuickAddReadingModal.vue
-│   ├── views/                # Seiten-Komponenten
+│   │   ├── QuickAddReadingModal.vue
+│   │   └── SyncStatusIndicator.vue
+│   ├── views/                # Page Components
 │   │   ├── DashboardView.vue
-│   │   ├── MetersView.vue
+│   │   ├── LaunchView.vue
 │   │   ├── MeterDetailView.vue
+│   │   ├── MetersView.vue
 │   │   └── SettingsView.vue
-│   ├── adapters/             # Storage Adapters
-│   │   ├── IndexedDBAdapter.js
-│   │   ├── FileSystemAdapter.js
+│   ├── adapters/             # Cloud Storage Adapter
 │   │   └── CloudStorageAdapter.js
 │   ├── services/             # Services
-│   │   ├── OAuthAuthService.js
-│   │   └── StorageService.js
+│   │   └── OAuthAuthService.js
+│   ├── storage/              # Local Storage
+│   │   ├── DataManager.js
+│   │   ├── IndexedDBAdapter.js
+│   │   └── StorageAdapter.js
 │   ├── stores/               # Pinia Stores
 │   │   └── dataStore.js
 │   ├── router/               # Vue Router
 │   │   └── index.js
-│   ├── App.vue               # Haupt-Komponente
+│   ├── App.vue               # Main Component
 │   └── main.js               # Entry Point
 ├── backend/                  # Backend (Node.js + Express)
 │   ├── src/
@@ -410,7 +426,7 @@ stathaus/
 │       └── hosts.yml.example
 ├── docs/
 │   └── OAUTH_SETUP.md        # OAuth provider setup guide
-├── public/                   # Public assets
+├── public/                   # Public assets (PWA icons, logos)
 ├── docker-compose.yml        # Development setup
 ├── Dockerfile                # Frontend production image
 ├── nginx.conf                # Nginx config with /api proxy
@@ -418,67 +434,77 @@ stathaus/
 └── package.json              # Frontend dependencies
 ```
 
-## 🎯 Verwendung
+## Usage
 
-### Erste Schritte
+### Getting Started
 
-1. **Zählertyp anlegen**
-   - Gehe zu Einstellungen
-   - Klicke auf "+ Typ hinzufügen"
-   - Z.B. "Strom" mit Einheit "kWh" und Icon "⚡"
+1. **Create Meter Type**
+   - Go to Settings
+   - Click "+ Add Type"
+   - E.g., "Electricity" with unit "kWh" and icon "⚡"
 
-2. **Zähler hinzufügen**
-   - Gehe zu "Zähler"
-   - Klicke auf "+ Zähler hinzufügen"
-   - Wähle Typ, gib Name und optional Zählernummer ein
+2. **Add Meter**
+   - Go to "Meters"
+   - Click "+ Add Meter"
+   - Select type, enter name and optionally meter number
 
-3. **Ablesung erfassen**
-   - Dashboard: Klicke auf "+ Ablesung erfassen"
-   - Oder: Zählerdetails → "+ Ablesung"
+3. **Record Reading**
+   - Dashboard: Click "+ Add Reading"
+   - Or: Meter details → "+ Reading"
 
-4. **Charts anschauen**
-   - Klicke auf einen Zähler
-   - Siehe Verlaufs-Chart und alle Ablesungen
+4. **View Charts**
+   - Click on a meter
+   - See history chart and all readings
 
-### Speicher-Modi wechseln
+### Switch Storage Modes
 
-#### Von Browser → Datei
-1. Einstellungen → Datenspeicherung
-2. "Neue Datei" oder "Datei öffnen"
-3. Wähle Speicherort (z.B. Nextcloud-Ordner)
-4. Daten werden automatisch übernommen
+#### From Browser → File
+1. Settings → Data Storage
+2. "New File" or "Open File"
+3. Select location (e.g., Nextcloud folder)
+4. Data is automatically transferred
 
-#### Von Datei → Browser
-1. Einstellungen → Browser-Speicher
-2. "Wechseln" klicken
-3. Daten werden übernommen
+#### From File → Browser
+1. Settings → Browser Storage
+2. Click "Switch"
+3. Data is transferred
 
-## 🔒 Privacy & Datenschutz
+## Privacy & Data Protection
 
-- ✅ **Keine Server-Kommunikation**: Alle Daten bleiben lokal
-- ✅ **Kein Tracking**: Keine Analytics, keine Cookies
-- ✅ **Open Source**: Code ist einsehbar
-- ✅ **DSGVO-konform**: Keine personenbezogenen Daten auf Servern
+**Local Mode (IndexedDB / File System):**
+- No server communication: All data stays local
+- No tracking: No analytics, no cookies
+- GDPR compliant: No personal data on servers
 
-## 🌐 Browser-Kompatibilität
+**Cloud Sync Mode (Optional):**
+- Opt-in: Cloud sync only when actively chosen
+- Secure authentication: OAuth2/OIDC with PKCE
+- Minimal data: Only meter and reading data is synchronized
+- Self-hosted option: Can run on your own infrastructure
+
+**General:**
+- Open Source: Code is fully visible
+- No tracking: No analytics, no cookies (even in cloud mode)
+
+## Browser Compatibility
 
 | Feature | Chrome/Edge | Safari | Firefox |
 |---------|-------------|--------|---------|
-| IndexedDB | ✅ | ✅ | ✅ |
-| File System API | ✅ Desktop | ❌ | ❌ |
-| PWA Install | ✅ | ✅ | ✅ |
-| Service Worker | ✅ | ✅ | ✅ |
+| IndexedDB | Yes | Yes | Yes |
+| File System API | Yes (Desktop) | No | No |
+| PWA Install | Yes | Yes | Yes |
+| Service Worker | Yes | Yes | Yes |
 
-**Empfehlung**: Chrome/Edge Desktop für File System API Support
+**Recommendation**: Chrome/Edge Desktop for File System API support
 
-## 🔧 VSCode Setup (Optional)
+## VSCode Setup (Optional)
 
-### Empfohlene Extensions
+### Recommended Extensions
 - Vue Language Features (Volar)
 - Tailwind CSS IntelliSense
 - Docker
 
-### Dev Container nutzen
+### Use Dev Container
 ```json
 // .devcontainer/devcontainer.json
 {
@@ -489,66 +515,75 @@ stathaus/
 }
 ```
 
-## 📦 Deployment
+## Deployment
 
-### Als Static Website
-Nach `npm run build` ist die App in `dist/` bereit für:
+### As Static Website
+After `npm run build` the app in `dist/` is ready for:
 - Netlify
 - Vercel
 - GitHub Pages
 - Nginx
 - Apache
 
-### Mit Docker
+### With Docker
 ```bash
-# Image bauen
-docker build -t stathaus:v1.0.0 .
+# Build image
+docker build -t stathaus:v1.2.0 .
 
-# Auf Server deployen
-docker run -d -p 80:80 stathaus:v1.0.0
+# Deploy to server
+docker run -d -p 80:80 stathaus:v1.2.0
 ```
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
-### Docker läuft nicht auf Mac
+### Docker not running on Mac
 ```bash
-# Docker Desktop installieren
+# Install Docker Desktop
 brew install --cask docker
 
-# Docker Desktop starten
+# Start Docker Desktop
 open -a Docker
 ```
 
-### Hot Reload funktioniert nicht
+### Hot Reload not working
 ```bash
-# In docker-compose.yml ist CHOKIDAR_USEPOLLING=true gesetzt
-# Falls es trotzdem nicht funktioniert:
+# CHOKIDAR_USEPOLLING=true is set in docker-compose.yml
+# If still not working:
 docker-compose down
 docker-compose up --build
 ```
 
-### Browser unterstützt File System API nicht
-- Nutze Chrome oder Edge (Desktop)
-- Oder nutze IndexedDB + manuelle Exports
+### Browser doesn't support File System API
+- Use Chrome or Edge (Desktop)
+- Or use IndexedDB + manual exports
 
-## 🚀 Roadmap
+## Roadmap
 
-- [ ] Dark Mode
-- [ ] Mehrere Kostenberechnung (Tarife)
-- [ ] Verbrauchsprognose
-- [ ] Foto-Upload für Ablesungen
-- [ ] PDF-Export für Berichte
-- [ ] Multi-Immobilien Support
-- [ ] Backup-Erinnerungen
+### Completed (v1.0 - v1.2)
+- [x] OAuth2/OIDC Cloud Sync
+- [x] Auto-Login
+- [x] Dashboard Entrypoint
+- [x] Continuous Meter Validation
+- [x] Conflict Resolution
+- [x] Logo Header
+- [x] PWA Icons
+- [x] Dark Mode
 
-## 📝 Lizenz
+### Planned
+- [ ] Cost Calculation (Tariff management)
+- [ ] Usage Predictions (Consumption forecasting)
+- [ ] PDF Reports (Exportable reports with charts)
+- [ ] Dashboard Widgets (Customizable dashboard)
+- [ ] Meter Grouping (Group by location/property)
 
-MIT License - nutze es wie du möchtest!
+## License
 
-## 🤝 Beitragen
+MIT License - use it however you want!
 
-PRs sind willkommen! Bei Fragen oder Problemen öffne ein Issue.
+## Contributing
+
+PRs are welcome! For questions or issues, open an issue.
 
 ---
 
-**Happy Metering! 🎉**
+**Happy Metering!**

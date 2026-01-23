@@ -1,50 +1,61 @@
-# PWA Icons erstellen
+# PWA Icons - StatHaus
 
-Für eine vollständige PWA benötigst du Icons in verschiedenen Größen.
-Platziere diese im `/public` Verzeichnis.
+This directory contains all icons and logos for the StatHaus PWA.
 
-## Benötigte Icons:
+## Current Icons (Production-Ready)
 
-1. **favicon.svg** (32x32)
-   - Wird in der Browser-Tab angezeigt
+| File | Size | Purpose | Status |
+|------|------|---------|--------|
+| `favicon.ico` | 32x32 | Browser tab icon | Present |
+| `pwa-192x192.png` | 192x192 | Standard PWA icon, also used as apple-touch-icon | Present |
+| `pwa-384x384.png` | 384x384 | High-resolution icon | Present |
+| `pwa-512x512.png` | 512x512 | Splash screen, store listing | Present |
 
-2. **pwa-192x192.png** (192x192)
-   - Standard PWA Icon
-   - Wird beim "Add to Home Screen" verwendet
+## Logo Files
 
-3. **pwa-512x512.png** (512x512)
-   - Hochauflösendes Icon
-   - Für moderne Devices
+| File | Purpose |
+|------|---------|
+| `logo_with_text_blue.png` | Header logo (light mode) |
+| `logo_with_text_white.png` | Header logo (dark mode / alternative) |
 
-4. **apple-touch-icon.png** (180x180)
-   - Für iOS "Add to Home Screen"
+## Apple Touch Icon
 
-## Schnell Icons erstellen:
+The apple-touch-icon is configured in `index.html` to use `pwa-192x192.png`:
 
-### Option 1: Online Tool
-Nutze https://realfavicongenerator.net/
-- Lade dein Logo hoch
-- Generiere alle Größen automatisch
-
-### Option 2: Figma/Photoshop
-1. Erstelle ein 512x512 Design mit dem 🏠 Emoji
-2. Nutze blauen Hintergrund (#3b82f6)
-3. Exportiere in allen benötigten Größen
-
-### Option 3: Placeholder
-Für Development kannst du auch einfach farbige Quadrate nutzen:
-
-```bash
-# Mit ImageMagick (falls installiert):
-convert -size 192x192 xc:#3b82f6 public/pwa-192x192.png
-convert -size 512x512 xc:#3b82f6 public/pwa-512x512.png
-convert -size 180x180 xc:#3b82f6 public/apple-touch-icon.png
+```html
+<link rel="apple-touch-icon" href="/pwa-192x192.png">
 ```
 
-## Aktuelle Placeholder
+## Regenerating Icons
 
-Im Moment hat das Projekt Placeholder-Referenzen.
-Die App funktioniert auch ohne die tatsächlichen Icon-Dateien,
-zeigt aber Warnungen in der Console.
+If you need to create new icons:
 
-Für Production: Erstelle echte Icons!
+### Option 1: Online Tool
+Use https://realfavicongenerator.net/
+- Upload your base logo
+- Generate all sizes automatically
+
+### Option 2: ImageMagick
+```bash
+# From existing 512x512 icon:
+convert pwa-512x512.png -resize 192x192 pwa-192x192.png
+convert pwa-512x512.png -resize 384x384 pwa-384x384.png
+```
+
+## Design Guidelines
+
+- **Background color**: #3b82f6 (Tailwind blue-500)
+- **Icon style**: Minimalist house symbol
+- **Format**: PNG (except favicon.ico)
+
+## PWA Manifest Configuration
+
+Icons are configured in `vite.config.js` (vite-plugin-pwa):
+
+```javascript
+icons: [
+  { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
+  { src: 'pwa-384x384.png', sizes: '384x384', type: 'image/png' },
+  { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
+]
+```
