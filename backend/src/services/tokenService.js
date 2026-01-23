@@ -51,6 +51,15 @@ async function exchangeCode(code, codeVerifier) {
 
     logger.info('Authorization code exchanged successfully');
 
+    // Debug: Log what tokens we received
+    logger.debug('Token exchange response', {
+      hasAccessToken: !!tokenSet.access_token,
+      hasRefreshToken: !!tokenSet.refresh_token,
+      hasIdToken: !!tokenSet.id_token,
+      expiresIn: tokenSet.expires_in,
+      tokenType: tokenSet.token_type
+    });
+
     return {
       accessToken: tokenSet.access_token,
       refreshToken: tokenSet.refresh_token,
