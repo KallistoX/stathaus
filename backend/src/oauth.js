@@ -5,9 +5,15 @@
  * Supports any OAuth2/OIDC-compliant provider (Authentik, Keycloak, Auth0, etc.)
  */
 
-const { Issuer } = require('openid-client');
+const { Issuer, custom } = require('openid-client');
 const config = require('./config');
 const logger = require('./logger');
+
+// Increase default timeout from 3500ms to 15000ms to handle slow OAuth providers
+// This prevents race conditions where the provider rotates tokens but we timeout
+Issuer[custom.http_options] = function (url, options) {
+  return { timeout: 15000 };
+};
 
 let oauthClient = null;
 let oauthIssuer = null;
