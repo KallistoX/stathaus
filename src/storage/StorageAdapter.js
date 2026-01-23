@@ -36,7 +36,8 @@ export class StorageAdapter {
       settings: {
         storageMode: 'indexeddb',
         currency: 'EUR',
-        theme: 'dark'
+        theme: 'dark',
+        dashboardWidgets: []
       },
       createdAt: new Date().toISOString(),
       lastModified: new Date().toISOString()

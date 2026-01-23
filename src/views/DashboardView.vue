@@ -2,14 +2,37 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Header -->
     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-      <p class="mt-2 text-gray-600 dark:text-gray-400">
-        Übersicht deiner Zählerstände
-      </p>
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+          <p class="mt-2 text-gray-600 dark:text-gray-400">
+            Übersicht deiner Zählerstände
+          </p>
+        </div>
+        <div v-if="metersWithTypes.length > 0" class="flex items-center space-x-2">
+          <button
+            @click="viewMode = 'standard'"
+            :class="viewMode === 'standard' ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'"
+            class="px-3 py-1.5 text-sm rounded-lg transition-colors"
+          >
+            📋 Standard
+          </button>
+          <button
+            @click="viewMode = 'widgets'"
+            :class="viewMode === 'widgets' ? 'bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'"
+            class="px-3 py-1.5 text-sm rounded-lg transition-colors"
+          >
+            🎨 Widgets
+          </button>
+        </div>
+      </div>
     </div>
 
+    <!-- Custom Widgets View -->
+    <DashboardGrid v-if="viewMode === 'widgets' && metersWithTypes.length > 0" @reset="viewMode = 'standard'" />
+
     <!-- Empty State -->
-    <div v-if="metersWithTypes.length === 0" class="text-center py-16">
+    <div v-else-if="metersWithTypes.length === 0" class="text-center py-16">
       <div class="text-6xl mb-4">📊</div>
       <h3 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">
         Noch keine Zähler vorhanden
@@ -26,8 +49,8 @@
       </router-link>
     </div>
 
-    <!-- Meters Grid -->
-    <div v-else>
+    <!-- Meters Grid (Standard View) -->
+    <div v-else-if="viewMode === 'standard'">
       <!-- Grouped Meters -->
       <div v-for="group in groups" :key="group.id" class="mb-8">
         <div
@@ -254,10 +277,12 @@ import { ref, computed, reactive } from 'vue'
 import { useDataStore } from '@/stores/dataStore'
 import QuickAddReadingModal from '@/components/QuickAddReadingModal.vue'
 import TrendIndicator from '@/components/TrendIndicator.vue'
+import DashboardGrid from '@/components/DashboardGrid.vue'
 import { PredictionService } from '@/services/PredictionService.js'
 
 const dataStore = useDataStore()
 
+const viewMode = ref('standard')
 const metersWithTypes = computed(() => dataStore.metersWithTypes)
 const groups = computed(() => dataStore.groups)
 const ungroupedMeters = computed(() => dataStore.ungroupedMeters)
