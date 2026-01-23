@@ -85,6 +85,13 @@
             <!-- Group -->
             <GroupSelector v-model="form.groupId" />
 
+            <!-- Tariff -->
+            <TariffSelector
+              v-if="form.typeId"
+              v-model="form.tariffId"
+              :meter-type-id="form.typeId"
+            />
+
             <!-- Continuous Meter Checkbox -->
             <div class="flex items-start space-x-3">
               <input
@@ -128,6 +135,7 @@
 import { ref, computed } from 'vue'
 import { useDataStore } from '@/stores/dataStore'
 import GroupSelector from '@/components/GroupSelector.vue'
+import TariffSelector from '@/components/TariffSelector.vue'
 
 const emit = defineEmits(['close', 'added'])
 
@@ -141,7 +149,8 @@ const form = ref({
   meterNumber: '',
   location: '',
   isContinuous: false,
-  groupId: null
+  groupId: null,
+  tariffId: null
 })
 
 function handleSubmit() {
@@ -152,7 +161,8 @@ function handleSubmit() {
       form.value.meterNumber,
       form.value.location,
       form.value.isContinuous,
-      form.value.groupId
+      form.value.groupId,
+      form.value.tariffId
     )
 
     emit('added')

@@ -72,6 +72,10 @@ export const useDataStore = defineStore('data', () => {
     return map
   })
 
+  const tariffs = computed(() => {
+    return data.value?.tariffs || []
+  })
+
   // Actions
   async function initialize() {
     if (isInitialized.value) return
@@ -336,9 +340,43 @@ export const useDataStore = defineStore('data', () => {
     return dataManager.value.getMetersInGroup(groupId)
   }
 
+  // Tariffs
+  function addTariff(name, meterTypeId, pricePerUnit, baseCharge, validFrom, validTo) {
+    return dataManager.value.addTariff(name, meterTypeId, pricePerUnit, baseCharge, validFrom, validTo)
+  }
+
+  function updateTariff(id, updates) {
+    return dataManager.value.updateTariff(id, updates)
+  }
+
+  function deleteTariff(id) {
+    return dataManager.value.deleteTariff(id)
+  }
+
+  function getTariff(id) {
+    return dataManager.value.getTariff(id)
+  }
+
+  function getTariffsForMeterType(meterTypeId) {
+    return dataManager.value.getTariffsForMeterType(meterTypeId)
+  }
+
+  // Cost Calculations
+  function calculateConsumption(meterId, startDate, endDate) {
+    return dataManager.value.calculateConsumption(meterId, startDate, endDate)
+  }
+
+  function calculateCost(meterId, startDate, endDate) {
+    return dataManager.value.calculateCost(meterId, startDate, endDate)
+  }
+
+  function getMonthlyBreakdown(meterId, year) {
+    return dataManager.value.getMonthlyBreakdown(meterId, year)
+  }
+
   // Meters
-  function addMeter(name, typeId, meterNumber, location, isContinuous = false, groupId = null) {
-    return dataManager.value.addMeter(name, typeId, meterNumber, location, isContinuous, groupId)
+  function addMeter(name, typeId, meterNumber, location, isContinuous = false, groupId = null, tariffId = null) {
+    return dataManager.value.addMeter(name, typeId, meterNumber, location, isContinuous, groupId, tariffId)
   }
 
   function updateMeter(id, updates) {
@@ -422,6 +460,7 @@ export const useDataStore = defineStore('data', () => {
     metersWithTypesAndGroups,
     ungroupedMeters,
     groupedMetersMap,
+    tariffs,
     theme,
 
     // Sync State
@@ -459,6 +498,18 @@ export const useDataStore = defineStore('data', () => {
     deleteGroup,
     getGroup,
     getMetersInGroup,
+
+    // Tariffs
+    addTariff,
+    updateTariff,
+    deleteTariff,
+    getTariff,
+    getTariffsForMeterType,
+
+    // Cost Calculations
+    calculateConsumption,
+    calculateCost,
+    getMonthlyBreakdown,
 
     // Meters
     addMeter,

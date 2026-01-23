@@ -32,6 +32,7 @@ export class StorageAdapter {
       meters: [],
       readings: [],
       groups: [],
+      tariffs: [],
       settings: {
         storageMode: 'indexeddb',
         currency: 'EUR',

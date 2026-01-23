@@ -243,6 +243,69 @@
       </div>
     </div>
 
+    <!-- Tariffs -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">💰 Tariffs</h2>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            Define tariffs to calculate costs for your meters
+          </p>
+        </div>
+        <button
+          @click="showAddTariff = true"
+          class="px-4 py-2 bg-primary-600 dark:bg-primary-700 text-white rounded-lg hover:bg-primary-700 dark:hover:bg-primary-600 transition-colors text-sm"
+        >
+          + Add Tariff
+        </button>
+      </div>
+
+      <div v-if="tariffs.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
+        No tariffs defined yet. Create a tariff to calculate costs.
+      </div>
+
+      <div v-else class="space-y-2">
+        <div
+          v-for="tariff in tariffs"
+          :key="tariff.id"
+          class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+        >
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center text-xl bg-green-100 dark:bg-green-900/30">
+              💰
+            </div>
+            <div>
+              <h3 class="font-medium text-gray-900 dark:text-white">{{ tariff.name }}</h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400">
+                {{ formatPrice(tariff.pricePerUnit) }}/{{ getMeterTypeUnit(tariff.meterTypeId) }}
+                <span v-if="tariff.baseCharge"> + {{ formatPrice(tariff.baseCharge) }}/month</span>
+              </p>
+              <p class="text-xs text-gray-400 dark:text-gray-500">
+                {{ getMeterTypeName(tariff.meterTypeId) }} · Valid from {{ formatDate(tariff.validFrom) }}
+                <span v-if="tariff.validTo"> until {{ formatDate(tariff.validTo) }}</span>
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button
+              @click="editTariff(tariff)"
+              class="p-2 text-gray-400 dark:text-gray-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+              title="Edit"
+            >
+              ✏️
+            </button>
+            <button
+              @click="confirmDeleteTariff(tariff)"
+              class="p-2 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+              title="Delete"
+            >
+              🗑️
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Export / Import -->
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
       <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">📦 Export & Import</h2>
@@ -351,6 +414,21 @@
       @close="groupToEdit = null"
       @updated="handleGroupUpdated"
     />
+
+    <!-- Add Tariff Modal -->
+    <AddTariffModal
+      v-if="showAddTariff"
+      @close="showAddTariff = false"
+      @added="handleTariffAdded"
+    />
+
+    <!-- Edit Tariff Modal -->
+    <EditTariffModal
+      v-if="tariffToEdit"
+      :tariff="tariffToEdit"
+      @close="tariffToEdit = null"
+      @updated="handleTariffUpdated"
+    />
   </div>
 </template>
 
@@ -360,6 +438,8 @@ import { useDataStore } from '@/stores/dataStore'
 import AddMeterTypeModal from '@/components/AddMeterTypeModal.vue'
 import AddGroupModal from '@/components/AddGroupModal.vue'
 import EditGroupModal from '@/components/EditGroupModal.vue'
+import AddTariffModal from '@/components/AddTariffModal.vue'
+import EditTariffModal from '@/components/EditTariffModal.vue'
 import CloudStorageAdapter from '@/adapters/CloudStorageAdapter.js'
 
 const dataStore = useDataStore()
@@ -368,6 +448,8 @@ const cloudAdapter = new CloudStorageAdapter()
 const showAddType = ref(false)
 const showAddGroup = ref(false)
 const groupToEdit = ref(null)
+const showAddTariff = ref(false)
+const tariffToEdit = ref(null)
 const fileInput = ref(null)
 
 // Cloud sync state
@@ -381,6 +463,8 @@ const storageMode = computed(() => dataStore.storageMode)
 const storageName = computed(() => dataStore.storageName)
 const meterTypes = computed(() => dataStore.meterTypes)
 const groups = computed(() => dataStore.groups)
+const tariffs = computed(() => dataStore.tariffs)
+const currency = computed(() => dataStore.data?.settings?.currency || 'EUR')
 const isLoading = computed(() => dataStore.isLoading)
 const theme = computed(() => dataStore.theme)
 
@@ -500,6 +584,53 @@ function confirmDeleteGroup(group) {
       alert('Error: ' + error.message)
     }
   }
+}
+
+// Tariff functions
+function handleTariffAdded() {
+  showAddTariff.value = false
+}
+
+function editTariff(tariff) {
+  tariffToEdit.value = tariff
+}
+
+function handleTariffUpdated() {
+  tariffToEdit.value = null
+}
+
+function confirmDeleteTariff(tariff) {
+  if (confirm(`Delete tariff "${tariff.name}"?`)) {
+    try {
+      dataStore.deleteTariff(tariff.id)
+    } catch (error) {
+      alert('Error: ' + error.message)
+    }
+  }
+}
+
+function getMeterTypeName(meterTypeId) {
+  const type = meterTypes.value.find(t => t.id === meterTypeId)
+  return type ? `${type.icon} ${type.name}` : 'Unknown'
+}
+
+function getMeterTypeUnit(meterTypeId) {
+  const type = meterTypes.value.find(t => t.id === meterTypeId)
+  return type?.unit || 'unit'
+}
+
+function formatPrice(price) {
+  return new Intl.NumberFormat('de-DE', {
+    style: 'currency',
+    currency: currency.value,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 4
+  }).format(price)
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return ''
+  return new Date(dateStr).toLocaleDateString('de-DE')
 }
 
 // Check auth state on mount

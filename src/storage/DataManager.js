@@ -156,6 +156,226 @@ export class DataManager {
     return this.data.meters.filter(m => !m.groupId)
   }
 
+  // ===== TARIFFS =====
+
+  /**
+   * Add a new tariff
+   */
+  addTariff(name, meterTypeId, pricePerUnit, baseCharge = 0, validFrom = null, validTo = null) {
+    const tariff = {
+      id: crypto.randomUUID(),
+      name,
+      meterTypeId,
+      pricePerUnit: parseFloat(pricePerUnit),
+      baseCharge: parseFloat(baseCharge),
+      validFrom: validFrom || new Date().toISOString().split('T')[0],
+      validTo,
+      createdAt: new Date().toISOString()
+    }
+
+    this.data.tariffs.push(tariff)
+    this._scheduleAutoSave()
+    return tariff
+  }
+
+  /**
+   * Update an existing tariff
+   */
+  updateTariff(id, updates) {
+    const index = this.data.tariffs.findIndex(t => t.id === id)
+    if (index === -1) {
+      throw new Error('Tariff not found')
+    }
+
+    if (updates.pricePerUnit !== undefined) {
+      updates.pricePerUnit = parseFloat(updates.pricePerUnit)
+    }
+    if (updates.baseCharge !== undefined) {
+      updates.baseCharge = parseFloat(updates.baseCharge)
+    }
+
+    this.data.tariffs[index] = {
+      ...this.data.tariffs[index],
+      ...updates
+    }
+    this._scheduleAutoSave()
+    return this.data.tariffs[index]
+  }
+
+  /**
+   * Delete a tariff (unlinks from meters)
+   */
+  deleteTariff(id) {
+    // Unlink all meters from this tariff
+    this.data.meters.forEach(meter => {
+      if (meter.tariffId === id) {
+        meter.tariffId = null
+      }
+    })
+
+    this.data.tariffs = this.data.tariffs.filter(t => t.id !== id)
+    this._scheduleAutoSave()
+  }
+
+  /**
+   * Get all tariffs
+   */
+  getTariffs() {
+    return this.data.tariffs || []
+  }
+
+  /**
+   * Get a single tariff by ID
+   */
+  getTariff(id) {
+    return this.data.tariffs?.find(t => t.id === id)
+  }
+
+  /**
+   * Get tariffs for a specific meter type
+   */
+  getTariffsForMeterType(meterTypeId) {
+    return (this.data.tariffs || []).filter(t => t.meterTypeId === meterTypeId)
+  }
+
+  /**
+   * Get the active tariff for a meter at a specific date
+   */
+  getActiveTariffForMeter(meterId, date = new Date()) {
+    const meter = this.getMeter(meterId)
+    if (!meter || !meter.tariffId) return null
+
+    const tariff = this.getTariff(meter.tariffId)
+    if (!tariff) return null
+
+    const checkDate = typeof date === 'string' ? new Date(date) : date
+    const tariffStart = new Date(tariff.validFrom)
+    const tariffEnd = tariff.validTo ? new Date(tariff.validTo) : null
+
+    if (checkDate >= tariffStart && (!tariffEnd || checkDate <= tariffEnd)) {
+      return tariff
+    }
+
+    return null
+  }
+
+  // ===== COST CALCULATIONS =====
+
+  /**
+   * Calculate consumption between two readings
+   */
+  calculateConsumption(meterId, startDate = null, endDate = null) {
+    const readings = this.getReadingsForMeter(meterId)
+    if (readings.length < 2) return { consumption: 0, readings: [] }
+
+    let filteredReadings = readings
+    if (startDate) {
+      const start = new Date(startDate)
+      filteredReadings = filteredReadings.filter(r => new Date(r.timestamp) >= start)
+    }
+    if (endDate) {
+      const end = new Date(endDate)
+      filteredReadings = filteredReadings.filter(r => new Date(r.timestamp) <= end)
+    }
+
+    if (filteredReadings.length < 2) return { consumption: 0, readings: filteredReadings }
+
+    const firstReading = filteredReadings[0]
+    const lastReading = filteredReadings[filteredReadings.length - 1]
+    const consumption = lastReading.value - firstReading.value
+
+    return {
+      consumption,
+      readings: filteredReadings,
+      startDate: firstReading.timestamp,
+      endDate: lastReading.timestamp
+    }
+  }
+
+  /**
+   * Calculate cost for a meter in a date range
+   */
+  calculateCost(meterId, startDate = null, endDate = null) {
+    const meter = this.getMeter(meterId)
+    if (!meter) return { cost: 0, consumption: 0, tariff: null }
+
+    const tariff = meter.tariffId ? this.getTariff(meter.tariffId) : null
+    if (!tariff) return { cost: 0, consumption: 0, tariff: null, error: 'No tariff assigned' }
+
+    const { consumption, startDate: actualStart, endDate: actualEnd } = this.calculateConsumption(meterId, startDate, endDate)
+
+    // Calculate usage cost
+    const usageCost = consumption * tariff.pricePerUnit
+
+    // Calculate base charge (pro-rated if date range specified)
+    let baseCharge = 0
+    if (tariff.baseCharge > 0 && actualStart && actualEnd) {
+      const start = new Date(actualStart)
+      const end = new Date(actualEnd)
+      const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24))
+      const monthlyCharge = tariff.baseCharge
+      baseCharge = (monthlyCharge / 30) * days
+    }
+
+    const totalCost = usageCost + baseCharge
+
+    return {
+      cost: totalCost,
+      usageCost,
+      baseCharge,
+      consumption,
+      tariff,
+      startDate: actualStart,
+      endDate: actualEnd,
+      currency: this.data.settings?.currency || 'EUR'
+    }
+  }
+
+  /**
+   * Get monthly cost breakdown for a meter
+   */
+  getMonthlyBreakdown(meterId, year = new Date().getFullYear()) {
+    const readings = this.getReadingsForMeter(meterId)
+    const meter = this.getMeter(meterId)
+    const tariff = meter?.tariffId ? this.getTariff(meter.tariffId) : null
+
+    const months = []
+    for (let month = 0; month < 12; month++) {
+      const startDate = new Date(year, month, 1)
+      const endDate = new Date(year, month + 1, 0, 23, 59, 59)
+
+      // Get readings in this month
+      const monthReadings = readings.filter(r => {
+        const date = new Date(r.timestamp)
+        return date >= startDate && date <= endDate
+      })
+
+      let consumption = 0
+      let cost = 0
+
+      if (monthReadings.length >= 2) {
+        const first = monthReadings[0]
+        const last = monthReadings[monthReadings.length - 1]
+        consumption = last.value - first.value
+
+        if (tariff) {
+          cost = consumption * tariff.pricePerUnit + (tariff.baseCharge || 0)
+        }
+      }
+
+      months.push({
+        month: month + 1,
+        year,
+        monthName: startDate.toLocaleDateString('en-US', { month: 'short' }),
+        consumption,
+        cost,
+        readingsCount: monthReadings.length
+      })
+    }
+
+    return months
+  }
+
   // ===== METER TYPES =====
 
   /**
@@ -218,7 +438,7 @@ export class DataManager {
   /**
    * Add a new meter
    */
-  addMeter(name, typeId, meterNumber = '', location = '', isContinuous = false, groupId = null) {
+  addMeter(name, typeId, meterNumber = '', location = '', isContinuous = false, groupId = null, tariffId = null) {
     const meter = {
       id: crypto.randomUUID(),
       name,
@@ -227,6 +447,7 @@ export class DataManager {
       location,
       isContinuous,
       groupId,
+      tariffId,
       createdAt: new Date().toISOString()
     }
 

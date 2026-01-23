@@ -64,6 +64,129 @@
         </div>
       </div>
 
+      <!-- Cost Summary (if tariff assigned) -->
+      <div v-if="meter.tariffId && tariff" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Kosten & Verbrauch</h2>
+          <span class="text-sm text-gray-500 dark:text-gray-400">
+            Tarif: {{ tariff.name }}
+          </span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <!-- Total Consumption -->
+          <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+            <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Gesamtverbrauch</h3>
+            <div class="flex items-baseline space-x-2">
+              <span class="text-2xl font-bold text-gray-900 dark:text-white">
+                {{ formatNumber(consumption) }}
+              </span>
+              <span class="text-gray-500 dark:text-gray-400">{{ meter.type?.unit }}</span>
+            </div>
+          </div>
+
+          <!-- Total Cost -->
+          <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+            <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Gesamtkosten</h3>
+            <div class="flex items-baseline space-x-2">
+              <span class="text-2xl font-bold text-green-600 dark:text-green-400">
+                {{ formatCurrency(totalCost) }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Price per Unit -->
+          <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+            <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">Preis pro {{ meter.type?.unit }}</h3>
+            <div class="flex items-baseline space-x-2">
+              <span class="text-2xl font-bold text-gray-900 dark:text-white">
+                {{ formatCurrency(tariff.pricePerUnit) }}
+              </span>
+            </div>
+            <p v-if="tariff.baseCharge > 0" class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              + {{ formatCurrency(tariff.baseCharge) }} Grundgebühr/Monat
+            </p>
+          </div>
+        </div>
+
+        <!-- Year selector for monthly breakdown -->
+        <div class="mt-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-md font-medium text-gray-700 dark:text-gray-300">Monatsübersicht {{ selectedYear }}</h3>
+            <div class="flex items-center space-x-2">
+              <button
+                @click="selectedYear--"
+                class="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              >
+                ←
+              </button>
+              <span class="text-sm text-gray-600 dark:text-gray-400">{{ selectedYear }}</span>
+              <button
+                @click="selectedYear++"
+                :disabled="selectedYear >= currentYear"
+                class="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 disabled:opacity-50"
+              >
+                →
+              </button>
+            </div>
+          </div>
+
+          <div v-if="monthlyBreakdown.length > 0" class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-gray-200 dark:border-gray-600">
+                  <th class="text-left py-2 text-gray-500 dark:text-gray-400">Monat</th>
+                  <th class="text-right py-2 text-gray-500 dark:text-gray-400">Verbrauch</th>
+                  <th class="text-right py-2 text-gray-500 dark:text-gray-400">Kosten</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="month in monthlyBreakdown"
+                  :key="month.month"
+                  class="border-b border-gray-100 dark:border-gray-700"
+                >
+                  <td class="py-2 text-gray-900 dark:text-white">{{ month.monthName }}</td>
+                  <td class="py-2 text-right text-gray-700 dark:text-gray-300">
+                    {{ formatNumber(month.consumption) }} {{ meter.type?.unit }}
+                  </td>
+                  <td class="py-2 text-right font-medium text-green-600 dark:text-green-400">
+                    {{ formatCurrency(month.cost) }}
+                  </td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr class="border-t-2 border-gray-300 dark:border-gray-500">
+                  <td class="py-2 font-semibold text-gray-900 dark:text-white">Gesamt</td>
+                  <td class="py-2 text-right font-semibold text-gray-900 dark:text-white">
+                    {{ formatNumber(yearlyTotalConsumption) }} {{ meter.type?.unit }}
+                  </td>
+                  <td class="py-2 text-right font-semibold text-green-600 dark:text-green-400">
+                    {{ formatCurrency(yearlyTotalCost) }}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <p v-else class="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+            Keine Daten für {{ selectedYear }} vorhanden
+          </p>
+        </div>
+      </div>
+
+      <!-- No Tariff Info -->
+      <div v-else-if="readings.length >= 2" class="bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 p-4 mb-8">
+        <p class="text-sm text-blue-800 dark:text-blue-300">
+          💡 Weise diesem Zähler einen Tarif zu, um Kosten berechnen zu lassen.
+          <button
+            @click="showEditMeter = true"
+            class="underline hover:no-underline ml-1"
+          >
+            Zähler bearbeiten
+          </button>
+        </p>
+      </div>
+
       <!-- Chart -->
       <div v-if="readings.length > 0" class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Verlauf</h2>
@@ -140,6 +263,8 @@ const dataStore = useDataStore()
 
 const showAddReading = ref(false)
 const showEditMeter = ref(false)
+const currentYear = new Date().getFullYear()
+const selectedYear = ref(currentYear)
 
 const meter = computed(() => {
   const meterId = route.params.id
@@ -158,6 +283,44 @@ const sortedReadings = computed(() => {
 const latestReading = computed(() => {
   return readings.value.length > 0 ? readings.value[readings.value.length - 1] : null
 })
+
+// Cost calculation computed properties
+const tariff = computed(() => {
+  if (!meter.value?.tariffId) return null
+  return dataStore.getTariff(meter.value.tariffId)
+})
+
+const consumption = computed(() => {
+  if (!meter.value) return 0
+  return dataStore.calculateConsumption(meter.value.id)
+})
+
+const totalCost = computed(() => {
+  if (!meter.value) return 0
+  return dataStore.calculateCost(meter.value.id)
+})
+
+const monthlyBreakdown = computed(() => {
+  if (!meter.value) return []
+  const breakdown = dataStore.getMonthlyBreakdown(meter.value.id, selectedYear.value)
+  const monthNames = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember']
+  return breakdown
+    .filter(m => m.consumption > 0 || m.cost > 0)
+    .map(m => ({
+      ...m,
+      monthName: monthNames[m.month - 1]
+    }))
+})
+
+const yearlyTotalConsumption = computed(() => {
+  return monthlyBreakdown.value.reduce((sum, m) => sum + m.consumption, 0)
+})
+
+const yearlyTotalCost = computed(() => {
+  return monthlyBreakdown.value.reduce((sum, m) => sum + m.cost, 0)
+})
+
+const currency = computed(() => dataStore.data?.settings?.currency || 'EUR')
 
 const chartOption = computed(() => {
   if (readings.value.length === 0) return {}
@@ -262,6 +425,15 @@ const chartOption = computed(() => {
 function formatNumber(value) {
   return new Intl.NumberFormat('de-DE', {
     minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+  }).format(value)
+}
+
+function formatCurrency(value) {
+  return new Intl.NumberFormat('de-DE', {
+    style: 'currency',
+    currency: currency.value,
+    minimumFractionDigits: 2,
     maximumFractionDigits: 2
   }).format(value)
 }
