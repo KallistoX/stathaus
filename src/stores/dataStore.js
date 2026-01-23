@@ -48,6 +48,30 @@ export const useDataStore = defineStore('data', () => {
     })
   })
 
+  const groups = computed(() => {
+    return data.value?.groups || []
+  })
+
+  const metersWithTypesAndGroups = computed(() => {
+    return meters.value.map(meter => {
+      const type = meterTypes.value.find(t => t.id === meter.typeId)
+      const group = groups.value.find(g => g.id === meter.groupId)
+      return { ...meter, type, group }
+    })
+  })
+
+  const ungroupedMeters = computed(() => {
+    return metersWithTypes.value.filter(m => !m.groupId)
+  })
+
+  const groupedMetersMap = computed(() => {
+    const map = new Map()
+    groups.value.forEach(group => {
+      map.set(group.id, metersWithTypes.value.filter(m => m.groupId === group.id))
+    })
+    return map
+  })
+
   // Actions
   async function initialize() {
     if (isInitialized.value) return
@@ -291,9 +315,30 @@ export const useDataStore = defineStore('data', () => {
     return dataManager.value.deleteMeterType(id)
   }
 
+  // Groups
+  function addGroup(name, description, icon, color) {
+    return dataManager.value.addGroup(name, description, icon, color)
+  }
+
+  function updateGroup(id, updates) {
+    return dataManager.value.updateGroup(id, updates)
+  }
+
+  function deleteGroup(id) {
+    return dataManager.value.deleteGroup(id)
+  }
+
+  function getGroup(id) {
+    return dataManager.value.getGroup(id)
+  }
+
+  function getMetersInGroup(groupId) {
+    return dataManager.value.getMetersInGroup(groupId)
+  }
+
   // Meters
-  function addMeter(name, typeId, meterNumber, location, isContinuous = false) {
-    return dataManager.value.addMeter(name, typeId, meterNumber, location, isContinuous)
+  function addMeter(name, typeId, meterNumber, location, isContinuous = false, groupId = null) {
+    return dataManager.value.addMeter(name, typeId, meterNumber, location, isContinuous, groupId)
   }
 
   function updateMeter(id, updates) {
@@ -373,6 +418,10 @@ export const useDataStore = defineStore('data', () => {
     meterTypes,
     meters,
     metersWithTypes,
+    groups,
+    metersWithTypesAndGroups,
+    ungroupedMeters,
+    groupedMetersMap,
     theme,
 
     // Sync State
@@ -403,6 +452,13 @@ export const useDataStore = defineStore('data', () => {
     addMeterType,
     updateMeterType,
     deleteMeterType,
+
+    // Groups
+    addGroup,
+    updateGroup,
+    deleteGroup,
+    getGroup,
+    getMetersInGroup,
 
     // Meters
     addMeter,

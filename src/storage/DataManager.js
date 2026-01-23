@@ -76,6 +76,86 @@ export class DataManager {
     this._notifyListeners()
   }
 
+  // ===== GROUPS =====
+
+  /**
+   * Add a new group
+   */
+  addGroup(name, description = '', icon = '🏠', color = '#3b82f6') {
+    const group = {
+      id: crypto.randomUUID(),
+      name,
+      description,
+      icon,
+      color,
+      createdAt: new Date().toISOString()
+    }
+
+    this.data.groups.push(group)
+    this._scheduleAutoSave()
+    return group
+  }
+
+  /**
+   * Update an existing group
+   */
+  updateGroup(id, updates) {
+    const index = this.data.groups.findIndex(g => g.id === id)
+    if (index === -1) {
+      throw new Error('Group not found')
+    }
+
+    this.data.groups[index] = {
+      ...this.data.groups[index],
+      ...updates
+    }
+    this._scheduleAutoSave()
+    return this.data.groups[index]
+  }
+
+  /**
+   * Delete a group (meters in group become ungrouped)
+   */
+  deleteGroup(id) {
+    // Unlink all meters from this group
+    this.data.meters.forEach(meter => {
+      if (meter.groupId === id) {
+        meter.groupId = null
+      }
+    })
+
+    this.data.groups = this.data.groups.filter(g => g.id !== id)
+    this._scheduleAutoSave()
+  }
+
+  /**
+   * Get all groups
+   */
+  getGroups() {
+    return this.data.groups
+  }
+
+  /**
+   * Get a single group by ID
+   */
+  getGroup(id) {
+    return this.data.groups.find(g => g.id === id)
+  }
+
+  /**
+   * Get all meters in a specific group
+   */
+  getMetersInGroup(groupId) {
+    return this.data.meters.filter(m => m.groupId === groupId)
+  }
+
+  /**
+   * Get all meters not assigned to any group
+   */
+  getUngroupedMeters() {
+    return this.data.meters.filter(m => !m.groupId)
+  }
+
   // ===== METER TYPES =====
 
   /**
@@ -138,7 +218,7 @@ export class DataManager {
   /**
    * Add a new meter
    */
-  addMeter(name, typeId, meterNumber = '', location = '', isContinuous = false) {
+  addMeter(name, typeId, meterNumber = '', location = '', isContinuous = false, groupId = null) {
     const meter = {
       id: crypto.randomUUID(),
       name,
@@ -146,6 +226,7 @@ export class DataManager {
       meterNumber,
       location,
       isContinuous,
+      groupId,
       createdAt: new Date().toISOString()
     }
 

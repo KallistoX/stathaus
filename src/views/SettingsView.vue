@@ -181,6 +181,68 @@
       </div>
     </div>
 
+    <!-- Groups -->
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-lg font-semibold text-gray-900 dark:text-white">🏠 Groups</h2>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            Organize meters by location or property
+          </p>
+        </div>
+        <button
+          @click="showAddGroup = true"
+          class="px-4 py-2 bg-primary-600 dark:bg-primary-700 text-white rounded-lg hover:bg-primary-700 dark:hover:bg-primary-600 transition-colors text-sm"
+        >
+          + Add Group
+        </button>
+      </div>
+
+      <div v-if="groups.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
+        No groups defined yet. Create a group to organize your meters.
+      </div>
+
+      <div v-else class="space-y-2">
+        <div
+          v-for="group in groups"
+          :key="group.id"
+          class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
+        >
+          <div class="flex items-center space-x-3">
+            <div
+              class="w-10 h-10 rounded-lg flex items-center justify-center text-xl"
+              :style="{ backgroundColor: group.color + '20' }"
+            >
+              {{ group.icon }}
+            </div>
+            <div>
+              <h3 class="font-medium text-gray-900 dark:text-white">{{ group.name }}</h3>
+              <p v-if="group.description" class="text-sm text-gray-500 dark:text-gray-400">{{ group.description }}</p>
+              <p class="text-xs text-gray-400 dark:text-gray-500">
+                {{ getMetersInGroup(group.id).length }} meters
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button
+              @click="editGroup(group)"
+              class="p-2 text-gray-400 dark:text-gray-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+              title="Edit"
+            >
+              ✏️
+            </button>
+            <button
+              @click="confirmDeleteGroup(group)"
+              class="p-2 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+              title="Delete"
+            >
+              🗑️
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Export / Import -->
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
       <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">📦 Export & Import</h2>
@@ -274,6 +336,21 @@
       @close="showAddType = false"
       @added="handleTypeAdded"
     />
+
+    <!-- Add Group Modal -->
+    <AddGroupModal
+      v-if="showAddGroup"
+      @close="showAddGroup = false"
+      @added="handleGroupAdded"
+    />
+
+    <!-- Edit Group Modal -->
+    <EditGroupModal
+      v-if="groupToEdit"
+      :group="groupToEdit"
+      @close="groupToEdit = null"
+      @updated="handleGroupUpdated"
+    />
   </div>
 </template>
 
@@ -281,12 +358,16 @@
 import { ref, computed, onMounted } from 'vue'
 import { useDataStore } from '@/stores/dataStore'
 import AddMeterTypeModal from '@/components/AddMeterTypeModal.vue'
+import AddGroupModal from '@/components/AddGroupModal.vue'
+import EditGroupModal from '@/components/EditGroupModal.vue'
 import CloudStorageAdapter from '@/adapters/CloudStorageAdapter.js'
 
 const dataStore = useDataStore()
 const cloudAdapter = new CloudStorageAdapter()
 
 const showAddType = ref(false)
+const showAddGroup = ref(false)
+const groupToEdit = ref(null)
 const fileInput = ref(null)
 
 // Cloud sync state
@@ -299,8 +380,13 @@ const syncSuccess = ref(null)
 const storageMode = computed(() => dataStore.storageMode)
 const storageName = computed(() => dataStore.storageName)
 const meterTypes = computed(() => dataStore.meterTypes)
+const groups = computed(() => dataStore.groups)
 const isLoading = computed(() => dataStore.isLoading)
 const theme = computed(() => dataStore.theme)
+
+function getMetersInGroup(groupId) {
+  return dataStore.getMetersInGroup(groupId)
+}
 
 // App version info (injected at build time)
 const appVersion = __APP_VERSION__
@@ -387,6 +473,33 @@ function confirmReset() {
 
 function handleTypeAdded() {
   showAddType.value = false
+}
+
+function handleGroupAdded() {
+  showAddGroup.value = false
+}
+
+function editGroup(group) {
+  groupToEdit.value = group
+}
+
+function handleGroupUpdated() {
+  groupToEdit.value = null
+}
+
+function confirmDeleteGroup(group) {
+  const metersCount = getMetersInGroup(group.id).length
+  let message = `Delete group "${group.name}"?`
+  if (metersCount > 0) {
+    message += ` ${metersCount} meter(s) will become ungrouped.`
+  }
+  if (confirm(message)) {
+    try {
+      dataStore.deleteGroup(group.id)
+    } catch (error) {
+      alert('Error: ' + error.message)
+    }
+  }
 }
 
 // Check auth state on mount

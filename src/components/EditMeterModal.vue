@@ -49,6 +49,9 @@
               >
             </div>
 
+            <!-- Group -->
+            <GroupSelector v-model="form.groupId" />
+
             <!-- Continuous Meter Checkbox -->
             <div class="flex items-start space-x-3">
               <input
@@ -91,6 +94,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useDataStore } from '@/stores/dataStore'
+import GroupSelector from '@/components/GroupSelector.vue'
 
 const props = defineProps({
   meter: {
@@ -107,7 +111,8 @@ const form = ref({
   name: '',
   meterNumber: '',
   location: '',
-  isContinuous: false
+  isContinuous: false,
+  groupId: null
 })
 
 onMounted(() => {
@@ -116,7 +121,8 @@ onMounted(() => {
     name: props.meter.name,
     meterNumber: props.meter.meterNumber || '',
     location: props.meter.location || '',
-    isContinuous: props.meter.isContinuous || false
+    isContinuous: props.meter.isContinuous || false,
+    groupId: props.meter.groupId || null
   }
 })
 
@@ -126,7 +132,8 @@ function handleSubmit() {
       name: form.value.name,
       meterNumber: form.value.meterNumber,
       location: form.value.location,
-      isContinuous: form.value.isContinuous
+      isContinuous: form.value.isContinuous,
+      groupId: form.value.groupId
     })
     emit('updated')
   } catch (error) {
