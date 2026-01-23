@@ -42,8 +42,8 @@ const config = {
 
   // Security Configuration
   security: {
-    // Supported JWT algorithms
-    jwtAlgorithms: ['RS256', 'RS384', 'RS512', 'ES256', 'ES384', 'ES512'],
+    // Supported JWT algorithms (including HS256 for Authentik compatibility)
+    jwtAlgorithms: ['RS256', 'RS384', 'RS512', 'ES256', 'ES384', 'ES512', 'HS256', 'HS384', 'HS512'],
     // Maximum request payload size
     maxPayloadSize: '10mb',
     // Rate limiting
