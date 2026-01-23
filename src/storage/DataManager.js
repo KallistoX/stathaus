@@ -28,7 +28,43 @@ export class DataManager {
   async init() {
     await this.adapter.init()
     this.data = await this.adapter.load()
+    this._migrateData()
     this._notifyListeners()
+  }
+
+  /**
+   * Migrate/normalize data structure to ensure all required fields exist
+   */
+  _migrateData() {
+    let needsSave = false
+
+    // Ensure groups array exists
+    if (!this.data.groups) {
+      this.data.groups = []
+      needsSave = true
+    }
+
+    // Ensure tariffs array exists
+    if (!this.data.tariffs) {
+      this.data.tariffs = []
+      needsSave = true
+    }
+
+    // Ensure settings object exists with all required fields
+    if (!this.data.settings) {
+      this.data.settings = {}
+      needsSave = true
+    }
+
+    if (this.data.settings.dashboardWidgets === undefined) {
+      this.data.settings.dashboardWidgets = []
+      needsSave = true
+    }
+
+    // Save if any migrations were needed
+    if (needsSave) {
+      this._scheduleAutoSave()
+    }
   }
 
   /**
@@ -51,6 +87,9 @@ export class DataManager {
       // Load data from the new adapter
       this.adapter = newAdapter
       this.data = await newAdapter.load()
+
+      // Ensure data structure is up-to-date
+      this._migrateData()
 
       const oldMode = this.data.settings?.storageMode
       const modeChanged = oldMode !== expectedMode
