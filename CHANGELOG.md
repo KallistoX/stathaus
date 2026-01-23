@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/KallistoX/stathaus/compare/v1.3.0...v1.4.0) (2026-01-23)
+
+
+### Features
+
+* **costs:** Add tariff management and cost calculation ([33f8ed4](https://github.com/KallistoX/stathaus/commit/33f8ed48cb9fa3d359631b62db484609bda5305a))
+
 # [1.3.0](https://github.com/KallistoX/stathaus/compare/v1.2.1...v1.3.0) (2026-01-23)
 
 
