@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/KallistoX/stathaus/compare/v1.4.0...v1.5.0) (2026-01-23)
+
+
+### Features
+
+* **predictions:** Add usage predictions and trend analysis ([3097da5](https://github.com/KallistoX/stathaus/commit/3097da5805fa140b4de413cd428eb9c1123889c9))
+
 # [1.4.0](https://github.com/KallistoX/stathaus/compare/v1.3.0...v1.4.0) (2026-01-23)
 
 
