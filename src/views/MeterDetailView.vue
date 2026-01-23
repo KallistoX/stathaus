@@ -193,6 +193,11 @@
         <v-chart :option="chartOption" autoresize class="h-80" />
       </div>
 
+      <!-- Prediction Card -->
+      <div v-if="readings.length >= 2" class="mb-8">
+        <PredictionCard :readings="readings" :unit="meter.type?.unit || 'Einheit'" />
+      </div>
+
       <!-- Readings History -->
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Ablesungen</h2>
@@ -257,6 +262,7 @@ import { useRoute } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore'
 import QuickAddReadingModal from '@/components/QuickAddReadingModal.vue'
 import EditMeterModal from '@/components/EditMeterModal.vue'
+import PredictionCard from '@/components/PredictionCard.vue'
 
 const route = useRoute()
 const dataStore = useDataStore()

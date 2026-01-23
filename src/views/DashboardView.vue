@@ -78,9 +78,16 @@
                 </span>
                 <span class="text-sm text-gray-500 dark:text-gray-400">{{ meter.type?.unit }}</span>
               </div>
-              <p class="text-xs text-gray-500 dark:text-gray-400">
-                {{ formatDate(getLatestReading(meter.id).timestamp) }}
-              </p>
+              <div class="flex items-center justify-between">
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                  {{ formatDate(getLatestReading(meter.id).timestamp) }}
+                </p>
+                <TrendIndicator
+                  v-if="getMeterReadings(meter.id).length >= 4"
+                  :trend="getMeterTrend(meter.id)"
+                  :show-percentage="false"
+                />
+              </div>
             </div>
             <div v-else class="text-gray-400 dark:text-gray-500 text-sm">
               Keine Ablesung vorhanden
@@ -144,9 +151,16 @@
                 </span>
                 <span class="text-sm text-gray-500 dark:text-gray-400">{{ meter.type?.unit }}</span>
               </div>
-              <p class="text-xs text-gray-500 dark:text-gray-400">
-                {{ formatDate(getLatestReading(meter.id).timestamp) }}
-              </p>
+              <div class="flex items-center justify-between">
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                  {{ formatDate(getLatestReading(meter.id).timestamp) }}
+                </p>
+                <TrendIndicator
+                  v-if="getMeterReadings(meter.id).length >= 4"
+                  :trend="getMeterTrend(meter.id)"
+                  :show-percentage="false"
+                />
+              </div>
             </div>
             <div v-else class="text-gray-400 dark:text-gray-500 text-sm">
               Keine Ablesung vorhanden
@@ -190,9 +204,16 @@
               </span>
               <span class="text-sm text-gray-500 dark:text-gray-400">{{ meter.type?.unit }}</span>
             </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400">
-              {{ formatDate(getLatestReading(meter.id).timestamp) }}
-            </p>
+            <div class="flex items-center justify-between">
+              <p class="text-xs text-gray-500 dark:text-gray-400">
+                {{ formatDate(getLatestReading(meter.id).timestamp) }}
+              </p>
+              <TrendIndicator
+                v-if="getMeterReadings(meter.id).length >= 4"
+                :trend="getMeterTrend(meter.id)"
+                :show-percentage="false"
+              />
+            </div>
           </div>
           <div v-else class="text-gray-400 dark:text-gray-500 text-sm">
             Keine Ablesung vorhanden
@@ -232,6 +253,8 @@
 import { ref, computed, reactive } from 'vue'
 import { useDataStore } from '@/stores/dataStore'
 import QuickAddReadingModal from '@/components/QuickAddReadingModal.vue'
+import TrendIndicator from '@/components/TrendIndicator.vue'
+import { PredictionService } from '@/services/PredictionService.js'
 
 const dataStore = useDataStore()
 
@@ -255,6 +278,15 @@ function toggleGroup(groupId) {
 
 function getLatestReading(meterId) {
   return dataStore.getLatestReading(meterId)
+}
+
+function getMeterReadings(meterId) {
+  return dataStore.getReadingsForMeter(meterId)
+}
+
+function getMeterTrend(meterId) {
+  const readings = getMeterReadings(meterId)
+  return PredictionService.analyzeTrend(readings)
 }
 
 function formatNumber(value) {
