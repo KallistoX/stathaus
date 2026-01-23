@@ -1,3 +1,10 @@
+## [1.1.3](https://github.com/KallistoX/stathaus/compare/v1.1.2...v1.1.3) (2026-01-23)
+
+
+### Bug Fixes
+
+* **auth:** Add retry logic for token refresh and better error logging ([d261743](https://github.com/KallistoX/stathaus/commit/d261743367edcde9a0f550dd0cca4cf3bcec0893))
+
 ## [1.1.2](https://github.com/KallistoX/stathaus/compare/v1.1.1...v1.1.2) (2026-01-23)
 
 
