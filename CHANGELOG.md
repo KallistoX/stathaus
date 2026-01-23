@@ -1,3 +1,10 @@
+## [1.1.4](https://github.com/KallistoX/stathaus/compare/v1.1.3...v1.1.4) (2026-01-23)
+
+
+### Bug Fixes
+
+* **auth:** Increase openid-client timeout to 15 seconds ([7ac2f9b](https://github.com/KallistoX/stathaus/commit/7ac2f9ba92cf0d3cb76fa55fa91d01ac9f866fea))
+
 ## [1.1.3](https://github.com/KallistoX/stathaus/compare/v1.1.2...v1.1.3) (2026-01-23)
 
 
