@@ -98,9 +98,14 @@ export default class OAuthAuthService {
     // Generate state for CSRF protection
     const state = generateRandomString(32);
 
-    // Store PKCE verifier and state in localStorage
+    // Store PKCE verifier and state in both localStorage and sessionStorage
+    // (sessionStorage can be more reliable in some browser configurations)
     localStorage.setItem('oauth_code_verifier', codeVerifier);
     localStorage.setItem('oauth_state', state);
+    sessionStorage.setItem('oauth_code_verifier', codeVerifier);
+    sessionStorage.setItem('oauth_state', state);
+
+    console.log('OAuth login initiated - state stored:', { state, codeVerifier: codeVerifier.substring(0, 10) + '...' });
 
     // Build authorization URL
     const params = new URLSearchParams({
@@ -130,16 +135,39 @@ export default class OAuthAuthService {
     await this.initialize();
 
     // Verify state parameter (CSRF protection)
-    const storedState = localStorage.getItem('oauth_state');
+    // Try localStorage first, fall back to sessionStorage
+    let storedState = localStorage.getItem('oauth_state');
+    let storedCodeVerifier = localStorage.getItem('oauth_code_verifier');
+
+    // Fallback to sessionStorage if localStorage is empty
+    if (!storedState) {
+      storedState = sessionStorage.getItem('oauth_state');
+      storedCodeVerifier = sessionStorage.getItem('oauth_code_verifier');
+      console.log('Using sessionStorage fallback for OAuth state');
+    }
+
+    console.log('OAuth state verification:', {
+      receivedState: state,
+      storedState: storedState,
+      match: storedState === state,
+      localStorageState: localStorage.getItem('oauth_state'),
+      sessionStorageState: sessionStorage.getItem('oauth_state')
+    });
+
     if (!storedState || storedState !== state) {
+      console.error('State mismatch details:', {
+        storedStateLength: storedState?.length,
+        receivedStateLength: state?.length,
+        storedStateExists: !!storedState
+      });
       throw new Error('Invalid state parameter - possible CSRF attack');
     }
 
-    // Get PKCE code verifier
-    const codeVerifier = localStorage.getItem('oauth_code_verifier');
-    if (!codeVerifier) {
+    // Get PKCE code verifier (already retrieved above with fallback)
+    if (!storedCodeVerifier) {
       throw new Error('Code verifier not found - login flow was not properly initiated');
     }
+    const codeVerifier = storedCodeVerifier;
 
     try {
       // Exchange code for tokens
@@ -174,15 +202,19 @@ export default class OAuthAuthService {
       // Store tokens
       this.storeTokens(tokens);
 
-      // Clean up temporary storage
+      // Clean up temporary storage (both localStorage and sessionStorage)
       localStorage.removeItem('oauth_code_verifier');
       localStorage.removeItem('oauth_state');
+      sessionStorage.removeItem('oauth_code_verifier');
+      sessionStorage.removeItem('oauth_state');
 
       return tokens;
     } catch (error) {
-      // Clean up on error
+      // Clean up on error (both localStorage and sessionStorage)
       localStorage.removeItem('oauth_code_verifier');
       localStorage.removeItem('oauth_state');
+      sessionStorage.removeItem('oauth_code_verifier');
+      sessionStorage.removeItem('oauth_state');
       throw error;
     }
   }

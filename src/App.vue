@@ -128,13 +128,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore'
 import SyncStatusIndicator from '@/components/SyncStatusIndicator.vue'
 import ConflictResolutionModal from '@/components/ConflictResolutionModal.vue'
 import CloudStorageAdapter from '@/adapters/CloudStorageAdapter.js'
 
 const dataStore = useDataStore()
+const route = useRoute()
 const cloudAdapter = new CloudStorageAdapter()
 
 const navItems = [
@@ -212,9 +214,24 @@ async function checkAuthState() {
   }
 }
 
+// Watch for route changes - re-check auth when returning from OAuth callback
+watch(
+  () => route.path,
+  async (newPath, oldPath) => {
+    // When navigating away from OAuth callback, re-check auth state
+    if (oldPath === '/auth/callback' && newPath !== '/auth/callback') {
+      await checkAuthState()
+    }
+  }
+)
+
 onMounted(async () => {
   await dataStore.initialize()
-  await checkAuthState()
+  // Only check auth state if not on OAuth callback page
+  // (OAuth callback will handle auth and trigger route change, which we watch for)
+  if (route.path !== '/auth/callback') {
+    await checkAuthState()
+  }
 })
 </script>
 
