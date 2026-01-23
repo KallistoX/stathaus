@@ -1,3 +1,10 @@
+## [1.0.3](https://github.com/KallistoX/stathaus/compare/v1.0.2...v1.0.3) (2026-01-23)
+
+
+### Bug Fixes
+
+* **ci:** Use native ARM runners instead of QEMU emulation ([8c5d8c0](https://github.com/KallistoX/stathaus/commit/8c5d8c0e64aab30d9d5551b691d8be1ed5b832ce))
+
 ## [1.0.2](https://github.com/KallistoX/stathaus/compare/v1.0.1...v1.0.2) (2026-01-23)
 
 
