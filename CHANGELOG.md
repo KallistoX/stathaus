@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/KallistoX/stathaus/compare/v1.1.0...v1.1.1) (2026-01-23)
+
+
+### Bug Fixes
+
+* **auth:** Prevent double OAuth callback processing ([c1b7279](https://github.com/KallistoX/stathaus/commit/c1b72794afe477979d8118338a2cb3879f919b6a))
+
 # [1.1.0](https://github.com/KallistoX/stathaus/compare/v1.0.5...v1.1.0) (2026-01-23)
 
 
