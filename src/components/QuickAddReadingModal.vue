@@ -2,7 +2,7 @@
   <div class="fixed inset-0 z-50 overflow-y-auto" @click.self="$emit('close')">
     <div class="flex min-h-screen items-center justify-center p-4">
       <div class="fixed inset-0 bg-black bg-opacity-30 transition-opacity"></div>
-      
+
       <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
         <!-- Header -->
         <div class="mb-4">
@@ -16,7 +16,7 @@
             <!-- Value -->
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Zählerstand *
+                Zahlerstand *
               </label>
               <input
                 v-model="form.value"
@@ -74,11 +74,22 @@
       </div>
     </div>
   </div>
+
+  <!-- Warning Modal for Continuous Meters -->
+  <ContinuousMeterWarningModal
+    v-if="showWarning"
+    :last-value="lastReadingValue"
+    :new-value="parseFloat(form.value)"
+    :unit="meter.type?.unit || ''"
+    @confirm="confirmSubmit"
+    @cancel="showWarning = false"
+  />
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useDataStore } from '@/stores/dataStore'
+import ContinuousMeterWarningModal from './ContinuousMeterWarningModal.vue'
 
 const props = defineProps({
   meter: {
@@ -97,6 +108,11 @@ const form = ref({
   note: ''
 })
 
+const showWarning = ref(false)
+
+const lastReading = computed(() => dataStore.getLatestReading(props.meter.id))
+const lastReadingValue = computed(() => lastReading.value?.value || 0)
+
 onMounted(() => {
   // Set current datetime as default
   const now = new Date()
@@ -106,9 +122,26 @@ onMounted(() => {
 })
 
 function handleSubmit() {
+  const newValue = parseFloat(form.value.value)
+
+  // Check if meter is continuous and new value is less than last reading
+  if (props.meter.isContinuous && lastReading.value && newValue < lastReadingValue.value) {
+    showWarning.value = true
+    return
+  }
+
+  saveReading()
+}
+
+function confirmSubmit() {
+  showWarning.value = false
+  saveReading()
+}
+
+function saveReading() {
   try {
     // Convert datetime-local to ISO string
-    const timestamp = form.value.timestamp 
+    const timestamp = form.value.timestamp
       ? new Date(form.value.timestamp).toISOString()
       : null
 

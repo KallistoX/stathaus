@@ -292,8 +292,8 @@ export const useDataStore = defineStore('data', () => {
   }
 
   // Meters
-  function addMeter(name, typeId, meterNumber, location) {
-    return dataManager.value.addMeter(name, typeId, meterNumber, location)
+  function addMeter(name, typeId, meterNumber, location, isContinuous = false) {
+    return dataManager.value.addMeter(name, typeId, meterNumber, location, isContinuous)
   }
 
   function updateMeter(id, updates) {

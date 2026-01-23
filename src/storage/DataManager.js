@@ -139,13 +139,14 @@ export class DataManager {
   /**
    * Add a new meter
    */
-  addMeter(name, typeId, meterNumber = '', location = '') {
+  addMeter(name, typeId, meterNumber = '', location = '', isContinuous = false) {
     const meter = {
       id: crypto.randomUUID(),
       name,
       typeId,
       meterNumber,
       location,
+      isContinuous,
       createdAt: new Date().toISOString()
     }
 

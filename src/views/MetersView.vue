@@ -78,9 +78,16 @@
               📊
             </button>
             <button
+              @click="editMeter(meter)"
+              class="p-2 text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              title="Zahler bearbeiten"
+            >
+              ✏️
+            </button>
+            <button
               @click="confirmDelete(meter)"
               class="p-2 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-              title="Zähler löschen"
+              title="Zahler loschen"
             >
               🗑️
             </button>
@@ -103,6 +110,14 @@
       @close="showAddMeter = false"
       @added="handleMeterAdded"
     />
+
+    <!-- Edit Meter Modal -->
+    <EditMeterModal
+      v-if="showEditMeter && editingMeter"
+      :meter="editingMeter"
+      @close="showEditMeter = false"
+      @updated="handleMeterUpdated"
+    />
   </div>
 </template>
 
@@ -110,10 +125,13 @@
 import { ref, computed } from 'vue'
 import { useDataStore } from '@/stores/dataStore'
 import AddMeterModal from '@/components/AddMeterModal.vue'
+import EditMeterModal from '@/components/EditMeterModal.vue'
 
 const dataStore = useDataStore()
 
 const showAddMeter = ref(false)
+const showEditMeter = ref(false)
+const editingMeter = ref(null)
 const metersWithTypes = computed(() => dataStore.metersWithTypes)
 
 function getLatestReading(meterId) {
@@ -139,5 +157,15 @@ function confirmDelete(meter) {
 
 function handleMeterAdded() {
   showAddMeter.value = false
+}
+
+function editMeter(meter) {
+  editingMeter.value = meter
+  showEditMeter.value = true
+}
+
+function handleMeterUpdated() {
+  showEditMeter.value = false
+  editingMeter.value = null
 }
 </script>

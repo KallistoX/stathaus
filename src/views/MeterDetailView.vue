@@ -21,12 +21,20 @@
               <p class="text-gray-600 dark:text-gray-400 mt-1">{{ meter.type?.name }}</p>
             </div>
           </div>
-          <button
-            @click="showAddReading = true"
-            class="px-4 py-2 bg-primary-600 dark:bg-primary-700 text-white rounded-lg hover:bg-primary-700 dark:hover:bg-primary-600 transition-colors"
-          >
-            + Ablesung
-          </button>
+          <div class="flex space-x-2">
+            <button
+              @click="showEditMeter = true"
+              class="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
+              ✏️ Bearbeiten
+            </button>
+            <button
+              @click="showAddReading = true"
+              class="px-4 py-2 bg-primary-600 dark:bg-primary-700 text-white rounded-lg hover:bg-primary-700 dark:hover:bg-primary-600 transition-colors"
+            >
+              + Ablesung
+            </button>
+          </div>
         </div>
       </div>
 
@@ -107,6 +115,14 @@
         @close="showAddReading = false"
         @added="handleReadingAdded"
       />
+
+      <!-- Edit Meter Modal -->
+      <EditMeterModal
+        v-if="showEditMeter && meter"
+        :meter="meter"
+        @close="showEditMeter = false"
+        @updated="handleMeterUpdated"
+      />
     </div>
   </div>
 </template>
@@ -116,11 +132,13 @@ import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore'
 import QuickAddReadingModal from '@/components/QuickAddReadingModal.vue'
+import EditMeterModal from '@/components/EditMeterModal.vue'
 
 const route = useRoute()
 const dataStore = useDataStore()
 
 const showAddReading = ref(false)
+const showEditMeter = ref(false)
 
 const meter = computed(() => {
   const meterId = route.params.id
@@ -282,5 +300,9 @@ function confirmDeleteReading(reading) {
 
 function handleReadingAdded() {
   showAddReading.value = false
+}
+
+function handleMeterUpdated() {
+  showEditMeter.value = false
 }
 </script>

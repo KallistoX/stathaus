@@ -211,7 +211,14 @@ async function retryInit() {
 }
 
 async function checkAuthState() {
-  isLoggedIn.value = cloudAdapter.isAuthenticated()
+  // First check if already authenticated
+  if (cloudAdapter.isAuthenticated()) {
+    isLoggedIn.value = true
+  } else {
+    // Try to restore session using refresh token
+    isLoggedIn.value = await cloudAdapter.tryRestoreSession()
+  }
+
   if (isLoggedIn.value) {
     try {
       userInfo.value = await cloudAdapter.getUserInfo()

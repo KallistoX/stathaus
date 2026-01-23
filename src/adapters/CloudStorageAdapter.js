@@ -133,6 +133,34 @@ export default class CloudStorageAdapter extends StorageAdapter {
   }
 
   /**
+   * Try to restore session using refresh token if access token is expired
+   * @returns {Promise<boolean>} True if session was restored
+   */
+  async tryRestoreSession() {
+    const refreshToken = localStorage.getItem('oauth_refresh_token');
+    const expiresAt = localStorage.getItem('oauth_expires_at');
+
+    // No refresh token available
+    if (!refreshToken) {
+      return false;
+    }
+
+    // Token is not expired yet, already authenticated
+    if (expiresAt && Date.now() < parseInt(expiresAt)) {
+      return true;
+    }
+
+    // Token is expired, try to refresh
+    try {
+      await this.authService.refreshToken();
+      return true;
+    } catch (error) {
+      console.log('Session restore failed:', error.message);
+      return false;
+    }
+  }
+
+  /**
    * Get current user information
    * @returns {Promise<Object>} User info
    */

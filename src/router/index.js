@@ -37,6 +37,12 @@ const router = createRouter({
       name: 'oauth-callback',
       component: OAuthCallback,
       meta: { title: 'Completing Sign-in' }
+    },
+    {
+      path: '/launch',
+      name: 'launch',
+      component: () => import('@/views/LaunchView.vue'),
+      meta: { title: 'Launching...' }
     }
   ]
 })
