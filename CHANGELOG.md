@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/KallistoX/stathaus/compare/v1.1.5...v1.2.0) (2026-01-23)
+
+
+### Features
+
+* Add auto-login, dashboard entrypoint, and continuous meter validation ([318cd96](https://github.com/KallistoX/stathaus/commit/318cd9619843f3b712d83d2feedff54ff475c77f))
+
 ## [1.1.5](https://github.com/KallistoX/stathaus/compare/v1.1.4...v1.1.5) (2026-01-23)
 
 
