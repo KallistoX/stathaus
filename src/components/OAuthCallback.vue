@@ -43,16 +43,21 @@ const error = ref(null);
 const success = ref(false);
 const statusMessage = ref('Authentifizierung wird verarbeitet...');
 
-// Guard against multiple callback processing (can happen with Vue re-renders)
-let callbackProcessed = false;
-
 onMounted(async () => {
-  // Prevent double processing
-  if (callbackProcessed) {
-    console.log('OAuth callback already processed, skipping');
+  // Guard against multiple callback processing using sessionStorage flag
+  // This persists across component re-mounts but clears on tab close
+  const callbackKey = 'oauth_callback_processing';
+  const currentState = new URLSearchParams(window.location.search).get('state');
+
+  // Check if we're already processing this specific callback
+  const processingState = sessionStorage.getItem(callbackKey);
+  if (processingState === currentState) {
+    console.log('OAuth callback already being processed for this state, skipping duplicate');
     return;
   }
-  callbackProcessed = true;
+
+  // Mark this callback as being processed
+  sessionStorage.setItem(callbackKey, currentState);
 
   try {
     // Get authorization code and state from URL parameters
@@ -89,7 +94,8 @@ onMounted(async () => {
       console.log('Cloud switch may need conflict resolution:', switchError.message);
     }
 
-    // Success!
+    // Success - clear processing flag
+    sessionStorage.removeItem(callbackKey);
     success.value = true;
     loading.value = false;
 
@@ -98,6 +104,8 @@ onMounted(async () => {
       router.push('/');
     }, 1000);
   } catch (err) {
+    // Error - clear processing flag to allow retry
+    sessionStorage.removeItem(callbackKey);
     console.error('OAuth callback error:', err);
     error.value = err.message || 'Authentifizierung fehlgeschlagen. Bitte erneut versuchen.';
     loading.value = false;
