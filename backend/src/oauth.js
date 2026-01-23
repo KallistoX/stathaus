@@ -39,9 +39,7 @@ async function setupOAuth() {
       redirect_uris: [config.oauth.redirectUri],
       response_types: ['code'],
       // Use client_secret_post for token endpoint authentication
-      token_endpoint_auth_method: 'client_secret_post',
-      // Allow HS256 for ID token signature (Authentik compatibility)
-      id_token_signed_response_alg: 'HS256'
+      token_endpoint_auth_method: 'client_secret_post'
     });
 
     logger.info('OAuth2/OIDC client configured successfully', {
