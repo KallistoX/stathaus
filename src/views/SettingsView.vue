@@ -240,7 +240,7 @@
     </div>
 
     <!-- Danger Zone -->
-    <div class="bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800 p-6">
+    <div class="bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800 p-6 mb-6">
       <h2 class="text-lg font-semibold text-red-900 dark:text-red-300 mb-4">⚠️ Gefahrenzone</h2>
       <p class="text-sm text-red-700 dark:text-red-400 mb-4">
         Diese Aktionen können nicht rückgängig gemacht werden!
@@ -251,6 +251,21 @@
       >
         Alle Daten löschen
       </button>
+    </div>
+
+    <!-- App Info -->
+    <div class="bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">ℹ️ App-Info</h2>
+      <div class="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+        <div class="flex justify-between">
+          <span>Version:</span>
+          <span class="font-mono text-gray-900 dark:text-white">v{{ appVersion }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span>Build:</span>
+          <span class="font-mono text-gray-900 dark:text-white">{{ buildTime }}</span>
+        </div>
+      </div>
     </div>
 
     <!-- Add Meter Type Modal -->
@@ -286,6 +301,19 @@ const storageName = computed(() => dataStore.storageName)
 const meterTypes = computed(() => dataStore.meterTypes)
 const isLoading = computed(() => dataStore.isLoading)
 const theme = computed(() => dataStore.theme)
+
+// App version info (injected at build time)
+const appVersion = __APP_VERSION__
+const buildTime = computed(() => {
+  const date = new Date(__BUILD_TIME__)
+  return date.toLocaleDateString('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+})
 
 function toggleTheme() {
   dataStore.toggleTheme()

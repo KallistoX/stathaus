@@ -1,0 +1,10 @@
+{
+  "instructions": [
+    "Always use conventional commit messages following the format: <type>(<scope>): <description>",
+    "Commit types: feat (new feature), fix (bug fix), docs (documentation), style (formatting), refactor (code restructuring), perf (performance), test (tests), build (build system), ci (CI config), chore (maintenance), revert (revert commit)",
+    "Use sentence case for the description (capitalize first letter)",
+    "Keep the header under 100 characters",
+    "Examples: 'feat: Add user authentication', 'fix(api): Resolve token refresh issue', 'docs: Update README with setup instructions'",
+    "After committing, push to remote to trigger CI/CD pipeline"
+  ]
+}

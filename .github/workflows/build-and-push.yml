@@ -1,9 +1,12 @@
 name: Build and Push Docker Image
 
+# This workflow handles:
+# - PR builds (no push, just validation)
+# - Manual tag pushes (v*) for hotfixes
+# Note: Regular releases are handled by release.yml via semantic-release
+
 on:
   push:
-    branches:
-      - main
     tags:
       - 'v*'
   pull_request:
