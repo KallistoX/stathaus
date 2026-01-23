@@ -1,6 +1,6 @@
 {
   "name": "stathaus",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Zählerstand-Erfassung mit lokaler Datenspeicherung",
   "type": "module",
   "scripts": {

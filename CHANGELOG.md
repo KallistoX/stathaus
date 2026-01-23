@@ -1,3 +1,10 @@
+## [1.0.4](https://github.com/KallistoX/stathaus/compare/v1.0.3...v1.0.4) (2026-01-23)
+
+
+### Bug Fixes
+
+* **ci:** Disable provenance for manifest-compatible images ([d73395e](https://github.com/KallistoX/stathaus/commit/d73395e20395bd3927fca8f5bc62ef12207f1dee))
+
 ## [1.0.3](https://github.com/KallistoX/stathaus/compare/v1.0.2...v1.0.3) (2026-01-23)
 
 

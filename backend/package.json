@@ -1,6 +1,6 @@
 {
   "name": "stathaus-backend",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "StatHaus Backend API - OAuth2/OIDC + Redis sync service",
   "main": "src/index.js",
   "scripts": {
