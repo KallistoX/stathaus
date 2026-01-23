@@ -34,7 +34,7 @@ const config = {
     clientId: process.env.OAUTH_CLIENT_ID,
     clientSecret: process.env.OAUTH_CLIENT_SECRET,
     redirectUri: process.env.OAUTH_REDIRECT_URI,
-    scopes: process.env.OAUTH_SCOPES || 'openid profile email',
+    scopes: process.env.OAUTH_SCOPES || 'openid profile email offline_access',
     // Auto-discover endpoints via .well-known/openid-configuration
     discoveryUrl: process.env.OAUTH_DISCOVERY_URL ||
                    (process.env.OAUTH_ISSUER ? `${process.env.OAUTH_ISSUER}/.well-known/openid-configuration` : null)
