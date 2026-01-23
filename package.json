@@ -15,7 +15,9 @@
     "vue-router": "^4.2.5",
     "pinia": "^2.1.7",
     "echarts": "^5.4.3",
-    "vue-echarts": "^6.6.8"
+    "vue-echarts": "^6.6.8",
+    "jspdf": "^2.5.1",
+    "jspdf-autotable": "^3.8.1"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.0",

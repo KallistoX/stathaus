@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import DashboardView from '@/views/DashboardView.vue'
 import MetersView from '@/views/MetersView.vue'
 import MeterDetailView from '@/views/MeterDetailView.vue'
+import ReportsView from '@/views/ReportsView.vue'
 import SettingsView from '@/views/SettingsView.vue'
 import OAuthCallback from '@/components/OAuthCallback.vue'
 
@@ -25,6 +26,12 @@ const router = createRouter({
       name: 'meter-detail',
       component: MeterDetailView,
       meta: { title: 'Zählerdetails' }
+    },
+    {
+      path: '/reports',
+      name: 'reports',
+      component: ReportsView,
+      meta: { title: 'Berichte' }
     },
     {
       path: '/settings',

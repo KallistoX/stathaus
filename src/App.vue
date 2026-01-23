@@ -150,6 +150,7 @@ const cloudAdapter = new CloudStorageAdapter()
 const navItems = [
   { path: '/', icon: '📊', label: 'Dashboard' },
   { path: '/meters', icon: '⚡', label: 'Zähler' },
+  { path: '/reports', icon: '📄', label: 'Berichte' },
   { path: '/settings', icon: '⚙️', label: 'Einstellungen' }
 ]
 
