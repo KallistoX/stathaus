@@ -161,6 +161,16 @@ export default class OAuthAuthService {
 
       const tokens = await response.json();
 
+      // Debug: Log what tokens we received from backend
+      console.log('Received tokens from backend:', {
+        hasAccessToken: !!tokens.accessToken,
+        hasRefreshToken: !!tokens.refreshToken,
+        hasIdToken: !!tokens.idToken,
+        expiresIn: tokens.expiresIn,
+        tokenType: tokens.tokenType,
+        allKeys: Object.keys(tokens)
+      });
+
       // Store tokens
       this.storeTokens(tokens);
 
@@ -186,6 +196,9 @@ export default class OAuthAuthService {
 
     if (tokens.refreshToken) {
       localStorage.setItem('oauth_refresh_token', tokens.refreshToken);
+      console.log('Refresh token stored successfully');
+    } else {
+      console.warn('No refresh token in response - will not be able to refresh session automatically');
     }
 
     if (tokens.expiresIn) {
