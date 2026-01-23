@@ -18,29 +18,39 @@ async function setupRedis() {
   try {
     redisClient = new Redis(config.redis);
 
-    // Event handlers
-    redisClient.on('connect', () => {
-      logger.info('Redis client connecting...');
-    });
-
-    redisClient.on('ready', () => {
-      logger.info('Redis client ready', {
-        host: config.redis.host,
-        port: config.redis.port,
-        db: config.redis.db
+    // Wait for connection to be ready
+    await new Promise((resolve, reject) => {
+      // Event handlers
+      redisClient.on('connect', () => {
+        logger.info('Redis client connecting...');
       });
-    });
 
-    redisClient.on('error', (error) => {
-      logger.error('Redis client error', { error: error.message });
-    });
+      redisClient.on('ready', () => {
+        logger.info('Redis client ready', {
+          host: config.redis.host,
+          port: config.redis.port,
+          db: config.redis.db
+        });
+        resolve();
+      });
 
-    redisClient.on('close', () => {
-      logger.warn('Redis connection closed');
-    });
+      redisClient.on('error', (error) => {
+        logger.error('Redis client error', { error: error.message });
+        reject(error);
+      });
 
-    redisClient.on('reconnecting', (time) => {
-      logger.info('Redis client reconnecting', { delay: time });
+      redisClient.on('close', () => {
+        logger.warn('Redis connection closed');
+      });
+
+      redisClient.on('reconnecting', (time) => {
+        logger.info('Redis client reconnecting', { delay: time });
+      });
+
+      // Timeout after 10 seconds
+      setTimeout(() => {
+        reject(new Error('Redis connection timeout after 10 seconds'));
+      }, 10000);
     });
 
     // Test connection

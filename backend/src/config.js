@@ -24,7 +24,8 @@ const config = {
     connectTimeout: 10000,
     maxRetriesPerRequest: 3,
     enableReadyCheck: true,
-    enableOfflineQueue: false
+    enableOfflineQueue: true, // Allow queuing commands while connecting
+    lazyConnect: false // Connect immediately when Redis instance is created
   },
 
   // OAuth2/OIDC Configuration
