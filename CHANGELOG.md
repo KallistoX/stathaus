@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/KallistoX/stathaus/compare/v1.0.5...v1.1.0) (2026-01-23)
+
+
+### Features
+
+* **ui:** Replace header emoji with logo images ([05cf6c1](https://github.com/KallistoX/stathaus/commit/05cf6c1e539741d5231bbfe78c145b8755f337d6))
+
 ## [1.0.5](https://github.com/KallistoX/stathaus/compare/v1.0.4...v1.0.5) (2026-01-23)
 
 
