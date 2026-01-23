@@ -1,0 +1,38 @@
+{
+  "name": "stathaus-backend",
+  "version": "1.0.0",
+  "description": "StatHaus Backend API - OAuth2/OIDC + Redis sync service",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "jest"
+  },
+  "keywords": [
+    "stathaus",
+    "oauth2",
+    "oidc",
+    "redis",
+    "sync"
+  ],
+  "author": "Kallisto",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "helmet": "^7.1.0",
+    "morgan": "^1.10.0",
+    "cors": "^2.8.5",
+    "openid-client": "^5.6.4",
+    "ioredis": "^5.3.2",
+    "winston": "^3.11.0",
+    "joi": "^17.12.0",
+    "express-rate-limit": "^7.1.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "jest": "^29.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
