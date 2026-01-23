@@ -1,3 +1,10 @@
+## [1.0.5](https://github.com/KallistoX/stathaus/compare/v1.0.4...v1.0.5) (2026-01-23)
+
+
+### Bug Fixes
+
+* **auth:** Resolve OAuth state validation and profile display issues ([202abec](https://github.com/KallistoX/stathaus/commit/202abec0c8febeeb6500578cd8118e0abeea3b21))
+
 ## [1.0.4](https://github.com/KallistoX/stathaus/compare/v1.0.3...v1.0.4) (2026-01-23)
 
 
