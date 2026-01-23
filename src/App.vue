@@ -5,9 +5,17 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
           <!-- Logo -->
-          <router-link to="/" class="flex items-center space-x-2">
-            <span class="text-2xl">🏠</span>
-            <span class="text-xl font-bold text-gray-900 dark:text-white">StatHaus</span>
+          <router-link to="/" class="flex items-center">
+            <img
+              src="/logo_with_text_blue.png"
+              alt="StatHaus"
+              class="h-8 dark:hidden"
+            />
+            <img
+              src="/logo_with_text_white.png"
+              alt="StatHaus"
+              class="h-8 hidden dark:block"
+            />
           </router-link>
 
           <!-- Center: Storage Info & Sync Status (Desktop) -->
