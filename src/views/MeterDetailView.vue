@@ -132,6 +132,9 @@
           </div>
 
           <div v-if="monthlyBreakdown.length > 0" class="overflow-x-auto">
+            <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">
+              <span class="italic">~Kursive Werte</span> sind Schätzungen basierend auf dem Tagesverbrauch
+            </p>
             <table class="w-full text-sm">
               <thead>
                 <tr class="border-b border-gray-200 dark:border-gray-600">
@@ -145,13 +148,16 @@
                   v-for="month in monthlyBreakdown"
                   :key="month.month"
                   class="border-b border-gray-100 dark:border-gray-700"
+                  :class="{ 'opacity-70 italic': month.isEstimated }"
                 >
-                  <td class="py-2 text-gray-900 dark:text-white">{{ month.monthName }}</td>
+                  <td class="py-2 text-gray-900 dark:text-white">
+                    <span v-if="month.isEstimated">~</span>{{ month.monthName }}
+                  </td>
                   <td class="py-2 text-right text-gray-700 dark:text-gray-300">
-                    {{ formatNumber(month.consumption) }} {{ meter.type?.unit }}
+                    <span v-if="month.isEstimated">~</span>{{ formatNumber(month.consumption) }} {{ meter.type?.unit }}
                   </td>
                   <td class="py-2 text-right font-medium text-green-600 dark:text-green-400">
-                    {{ formatCurrency(month.cost) }}
+                    <span v-if="month.isEstimated">~</span>{{ formatCurrency(month.cost) }}
                   </td>
                 </tr>
               </tbody>

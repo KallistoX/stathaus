@@ -372,8 +372,7 @@ export class DataManager {
 
   /**
    * Get monthly cost breakdown for a meter
-   * Calculates consumption between consecutive readings and attributes
-   * it to the month of the later reading
+   * Pro-rates consumption by days across months, marking estimated months
    */
   getMonthlyBreakdown(meterId, year = new Date().getFullYear()) {
     const readings = this.getReadingsForMeter(meterId)
@@ -389,11 +388,12 @@ export class DataManager {
         monthName: new Date(year, month, 1).toLocaleDateString('de-DE', { month: 'short' }),
         consumption: 0,
         cost: 0,
-        readingsCount: 0
+        readingsCount: 0,
+        isEstimated: false
       })
     }
 
-    // Count readings per month
+    // Count readings per month (for the selected year)
     readings.forEach(r => {
       const date = new Date(r.timestamp)
       if (date.getFullYear() === year) {
@@ -401,34 +401,46 @@ export class DataManager {
       }
     })
 
-    // Calculate consumption between consecutive readings
-    // Attribute to month of the later reading
+    // Calculate consumption between consecutive readings and pro-rate by days
     for (let i = 1; i < readings.length; i++) {
       const prevReading = readings[i - 1]
       const currReading = readings[i]
+      const prevDate = new Date(prevReading.timestamp)
       const currDate = new Date(currReading.timestamp)
-
-      if (currDate.getFullYear() !== year) continue
 
       const consumption = currReading.value - prevReading.value
       if (consumption < 0) continue  // Skip meter resets
 
-      const monthIndex = currDate.getMonth()
-      months[monthIndex].consumption += consumption
+      const totalDays = Math.max(1, Math.round((currDate - prevDate) / (1000 * 60 * 60 * 24)))
+      const consumptionPerDay = consumption / totalDays
 
-      if (tariff) {
-        months[monthIndex].cost += consumption * tariff.pricePerUnit
+      // Iterate through each day and attribute consumption to the correct month
+      const currentDay = new Date(prevDate)
+      currentDay.setDate(currentDay.getDate() + 1)  // Start from day after prev reading
+
+      while (currentDay <= currDate) {
+        if (currentDay.getFullYear() === year) {
+          const monthIndex = currentDay.getMonth()
+          months[monthIndex].consumption += consumptionPerDay
+
+          // Mark as estimated if no reading exists in this month
+          if (months[monthIndex].readingsCount === 0) {
+            months[monthIndex].isEstimated = true
+          }
+        }
+        currentDay.setDate(currentDay.getDate() + 1)
       }
     }
 
-    // Add base charge to months with consumption
-    if (tariff?.baseCharge > 0) {
-      months.forEach(m => {
-        if (m.consumption > 0) {
+    // Calculate costs
+    months.forEach(m => {
+      if (tariff && m.consumption > 0) {
+        m.cost = m.consumption * tariff.pricePerUnit
+        if (tariff.baseCharge > 0) {
           m.cost += tariff.baseCharge
         }
-      })
-    }
+      }
+    })
 
     return months
   }
