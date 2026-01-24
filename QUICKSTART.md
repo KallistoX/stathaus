@@ -107,45 +107,6 @@ curl http://localhost:3000/api/health
 curl http://localhost:3000/api/health/ready
 ```
 
-## Project Structure
-
-```
-src/
-├── storage/              # Local Storage Logic
-│   ├── StorageAdapter.js      # Abstract base class
-│   ├── IndexedDBAdapter.js    # Browser storage
-│   └── DataManager.js         # Central data management
-│
-├── adapters/             # Cloud Storage
-│   └── CloudStorageAdapter.js # Cloud sync adapter
-│
-├── services/             # Services
-│   └── OAuthAuthService.js    # OAuth2/OIDC service
-│
-├── stores/               # Pinia State Management
-│   └── dataStore.js           # Global state
-│
-├── views/                # Pages
-│   ├── DashboardView.vue      # Main overview (start page)
-│   ├── LaunchView.vue         # Launch/Loading screen
-│   ├── MetersView.vue         # Meter list
-│   ├── MeterDetailView.vue    # Single meter + chart
-│   └── SettingsView.vue       # Settings + storage
-│
-├── components/           # Reusable Components
-│   ├── AddMeterModal.vue
-│   ├── AddMeterTypeModal.vue
-│   ├── ConflictResolutionModal.vue
-│   ├── ContinuousMeterWarningModal.vue
-│   ├── EditMeterModal.vue
-│   ├── OAuthCallback.vue
-│   ├── QuickAddReadingModal.vue
-│   └── SyncStatusIndicator.vue
-│
-└── router/               # Vue Router
-    └── index.js
-```
-
 ## Testing Features
 
 ### 1. IndexedDB (Browser Storage)
