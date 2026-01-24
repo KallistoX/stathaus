@@ -30,8 +30,8 @@
 
           <!-- Right side: Navigation + User Profile -->
           <div class="flex items-center space-x-4">
-            <!-- Navigation -->
-            <nav class="flex items-center space-x-1">
+            <!-- Desktop Navigation -->
+            <nav class="hidden md:flex items-center space-x-1">
               <router-link
                 v-for="item in navItems"
                 :key="item.path"
@@ -44,8 +44,8 @@
               </router-link>
             </nav>
 
-            <!-- User Profile / Login Area -->
-            <div class="flex items-center">
+            <!-- User Profile / Login Area (Desktop) -->
+            <div class="hidden md:flex items-center">
               <!-- When logged in: User avatar + logout -->
               <div v-if="isLoggedIn" class="flex items-center space-x-2">
                 <div class="flex items-center space-x-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg">
@@ -80,6 +80,74 @@
                 <span class="hidden sm:inline">{{ authLoading ? 'Lädt...' : 'Anmelden' }}</span>
               </button>
             </div>
+
+            <!-- Mobile Menu Button -->
+            <button
+              @click="mobileMenuOpen = !mobileMenuOpen"
+              class="md:hidden p-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              aria-label="Menü öffnen"
+            >
+              <svg v-if="!mobileMenuOpen" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+              <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Mobile Menu Dropdown -->
+        <div
+          v-if="mobileMenuOpen"
+          class="md:hidden border-t border-gray-200 dark:border-gray-700 py-2"
+        >
+          <nav class="flex flex-col space-y-1 px-2">
+            <router-link
+              v-for="item in navItems"
+              :key="item.path"
+              :to="item.path"
+              class="nav-item"
+              :class="{ 'nav-item-active': $route.path === item.path }"
+              @click="mobileMenuOpen = false"
+            >
+              <span class="text-lg">{{ item.icon }}</span>
+              <span>{{ item.label }}</span>
+            </router-link>
+          </nav>
+
+          <!-- Mobile User Profile / Login -->
+          <div class="mt-2 pt-2 px-2 border-t border-gray-200 dark:border-gray-700">
+            <div v-if="isLoggedIn" class="flex items-center justify-between">
+              <div class="flex items-center space-x-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                <div class="w-7 h-7 rounded-full bg-primary-500 flex items-center justify-center text-white text-sm font-medium">
+                  {{ userInitial }}
+                </div>
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300 max-w-[150px] truncate">
+                  {{ userDisplayName }}
+                </span>
+              </div>
+              <button
+                @click="handleLogout; mobileMenuOpen = false"
+                class="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                title="Abmelden"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              </button>
+            </div>
+            <button
+              v-else
+              @click="handleLogin; mobileMenuOpen = false"
+              :disabled="authLoading"
+              class="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-primary-600 dark:bg-primary-700 text-white rounded-lg hover:bg-primary-700 dark:hover:bg-primary-600 transition-colors disabled:opacity-50"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+              </svg>
+              <span>{{ authLoading ? 'Lädt...' : 'Anmelden' }}</span>
+            </button>
           </div>
         </div>
       </div>
@@ -119,6 +187,9 @@
       @resolve-remote="dataStore.resolveConflictWithRemote"
       @cancel="dataStore.cancelConflictResolution"
     />
+
+    <!-- PWA Update Prompt -->
+    <PWAUpdatePrompt />
   </div>
 </template>
 
@@ -128,6 +199,7 @@ import { useRoute } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore'
 import SyncStatusIndicator from '@/components/SyncStatusIndicator.vue'
 import ConflictResolutionModal from '@/components/ConflictResolutionModal.vue'
+import PWAUpdatePrompt from '@/components/PWAUpdatePrompt.vue'
 import CloudStorageAdapter from '@/adapters/CloudStorageAdapter.js'
 
 const dataStore = useDataStore()
@@ -145,6 +217,9 @@ const navItems = [
 const isLoggedIn = ref(false)
 const userInfo = ref(null)
 const authLoading = ref(false)
+
+// Mobile menu state
+const mobileMenuOpen = ref(false)
 
 const userInitial = computed(() => {
   const name = userInfo.value?.name || userInfo.value?.email || 'U'
@@ -232,6 +307,9 @@ async function checkAuthState() {
 watch(
   () => route.path,
   async (newPath, oldPath) => {
+    // Close mobile menu on navigation
+    mobileMenuOpen.value = false
+
     // When navigating away from OAuth callback, re-check auth state
     if (oldPath === '/auth/callback' && newPath !== '/auth/callback') {
       await checkAuthState()
