@@ -53,6 +53,7 @@ export default class OAuthAuthService {
     this.apiBaseUrl = window.location.origin;
     this.config = null;
     this.initialized = false;
+    this.refreshPromise = null; // Track in-progress refresh to prevent race conditions
   }
 
   /**
@@ -257,15 +258,39 @@ export default class OAuthAuthService {
 
   /**
    * Refresh access token using refresh token
-   * Includes retry logic for transient errors (503, network issues)
+   * Uses promise deduplication to prevent race conditions when multiple
+   * concurrent calls attempt to refresh the same token
    * @returns {Promise<Object>} New token set
    */
   async refreshToken() {
+    // If a refresh is already in progress, wait for it instead of starting another
+    if (this.refreshPromise) {
+      return this.refreshPromise;
+    }
+
     const refreshToken = localStorage.getItem('oauth_refresh_token');
     if (!refreshToken) {
       throw new Error('No refresh token available');
     }
 
+    // Store the promise so concurrent calls can wait for it
+    this.refreshPromise = this._doRefresh(refreshToken);
+
+    try {
+      return await this.refreshPromise;
+    } finally {
+      // Clear the promise when done (success or failure)
+      this.refreshPromise = null;
+    }
+  }
+
+  /**
+   * Internal method to perform the actual token refresh
+   * Includes retry logic for transient errors (503, network issues)
+   * @param {string} refreshToken The refresh token to use
+   * @returns {Promise<Object>} New token set
+   */
+  async _doRefresh(refreshToken) {
     const maxRetries = 2;
     let lastError;
 
