@@ -1,3 +1,10 @@
+## [1.9.1](https://github.com/KallistoX/stathaus/compare/v1.9.0...v1.9.1) (2026-01-24)
+
+
+### Bug Fixes
+
+* **ui:** Fix mobile menu login/logout button click handlers ([67d742d](https://github.com/KallistoX/stathaus/commit/67d742d9ae9b70a4231b4a1920a212f78b5562de))
+
 # [1.9.0](https://github.com/KallistoX/stathaus/compare/v1.8.0...v1.9.0) (2026-01-24)
 
 
