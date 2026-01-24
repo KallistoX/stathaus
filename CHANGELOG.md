@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/KallistoX/stathaus/compare/v1.7.3...v1.8.0) (2026-01-24)
+
+
+### Features
+
+* Pro-rate monthly consumption with visual indicator for estimates ([56824dd](https://github.com/KallistoX/stathaus/commit/56824ddacbfe9127866e26afda17d2b84da08c12))
+
 ## [1.7.3](https://github.com/KallistoX/stathaus/compare/v1.7.2...v1.7.3) (2026-01-24)
 
 
