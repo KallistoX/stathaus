@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/KallistoX/stathaus/compare/v1.8.0...v1.9.0) (2026-01-24)
+
+
+### Features
+
+* Add mobile burger menu and PWA update prompt ([2d4fb61](https://github.com/KallistoX/stathaus/commit/2d4fb61552936024a28ce7b3e8a53f1c02392498))
+
 # [1.8.0](https://github.com/KallistoX/stathaus/compare/v1.7.3...v1.8.0) (2026-01-24)
 
 
