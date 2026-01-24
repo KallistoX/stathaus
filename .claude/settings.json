@@ -5,6 +5,7 @@
     "Use sentence case for the description (capitalize first letter)",
     "Keep the header under 100 characters",
     "Examples: 'feat: Add user authentication', 'fix(api): Resolve token refresh issue', 'docs: Update README with setup instructions'",
+    "When changes are done, build with docker. If builds are successful commit changes",    
     "After committing, push to remote to trigger CI/CD pipeline"
   ]
 }

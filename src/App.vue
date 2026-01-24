@@ -18,14 +18,8 @@
             />
           </router-link>
 
-          <!-- Center: Storage Info & Sync Status (Desktop) -->
-          <div class="hidden md:flex items-center space-x-4">
-            <div class="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-              <span>💾</span>
-              <span>{{ storageName }}</span>
-            </div>
-
-            <!-- Sync Status Indicator -->
+          <!-- Center: Sync Status (Desktop) -->
+          <div class="hidden md:flex items-center">
             <SyncStatusIndicator
               :sync-status="syncStatus"
               :sync-error="syncError"
@@ -116,13 +110,6 @@
       <router-view v-else />
     </main>
 
-    <!-- Footer (Mobile Storage Info) -->
-    <footer class="md:hidden bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-4 py-2">
-      <div class="text-xs text-gray-500 dark:text-gray-400 text-center">
-        💾 {{ storageName }}
-      </div>
-    </footer>
-
     <!-- Conflict Resolution Modal -->
     <ConflictResolutionModal
       v-if="showConflictModal"
@@ -171,7 +158,6 @@ const userDisplayName = computed(() => {
 // Store state
 const isLoading = computed(() => dataStore.isLoading)
 const error = computed(() => dataStore.error)
-const storageName = computed(() => dataStore.storageName)
 const storageMode = computed(() => dataStore.storageMode)
 
 // Sync state

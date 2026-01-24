@@ -372,43 +372,61 @@ export class DataManager {
 
   /**
    * Get monthly cost breakdown for a meter
+   * Calculates consumption between consecutive readings and attributes
+   * it to the month of the later reading
    */
   getMonthlyBreakdown(meterId, year = new Date().getFullYear()) {
     const readings = this.getReadingsForMeter(meterId)
     const meter = this.getMeter(meterId)
     const tariff = meter?.tariffId ? this.getTariff(meter.tariffId) : null
 
+    // Initialize all months
     const months = []
     for (let month = 0; month < 12; month++) {
-      const startDate = new Date(year, month, 1)
-      const endDate = new Date(year, month + 1, 0, 23, 59, 59)
-
-      // Get readings in this month
-      const monthReadings = readings.filter(r => {
-        const date = new Date(r.timestamp)
-        return date >= startDate && date <= endDate
-      })
-
-      let consumption = 0
-      let cost = 0
-
-      if (monthReadings.length >= 2) {
-        const first = monthReadings[0]
-        const last = monthReadings[monthReadings.length - 1]
-        consumption = last.value - first.value
-
-        if (tariff) {
-          cost = consumption * tariff.pricePerUnit + (tariff.baseCharge || 0)
-        }
-      }
-
       months.push({
         month: month + 1,
         year,
-        monthName: startDate.toLocaleDateString('en-US', { month: 'short' }),
-        consumption,
-        cost,
-        readingsCount: monthReadings.length
+        monthName: new Date(year, month, 1).toLocaleDateString('de-DE', { month: 'short' }),
+        consumption: 0,
+        cost: 0,
+        readingsCount: 0
+      })
+    }
+
+    // Count readings per month
+    readings.forEach(r => {
+      const date = new Date(r.timestamp)
+      if (date.getFullYear() === year) {
+        months[date.getMonth()].readingsCount++
+      }
+    })
+
+    // Calculate consumption between consecutive readings
+    // Attribute to month of the later reading
+    for (let i = 1; i < readings.length; i++) {
+      const prevReading = readings[i - 1]
+      const currReading = readings[i]
+      const currDate = new Date(currReading.timestamp)
+
+      if (currDate.getFullYear() !== year) continue
+
+      const consumption = currReading.value - prevReading.value
+      if (consumption < 0) continue  // Skip meter resets
+
+      const monthIndex = currDate.getMonth()
+      months[monthIndex].consumption += consumption
+
+      if (tariff) {
+        months[monthIndex].cost += consumption * tariff.pricePerUnit
+      }
+    }
+
+    // Add base charge to months with consumption
+    if (tariff?.baseCharge > 0) {
+      months.forEach(m => {
+        if (m.consumption > 0) {
+          m.cost += tariff.baseCharge
+        }
       })
     }
 

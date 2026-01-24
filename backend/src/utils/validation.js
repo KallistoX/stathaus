@@ -36,6 +36,9 @@ const syncUploadSchema = Joi.object({
       typeId: Joi.string().allow('', null),
       meterNumber: Joi.string().allow('', null),
       location: Joi.string().allow('', null),
+      isContinuous: Joi.boolean().default(false),
+      groupId: Joi.string().allow('', null),
+      tariffId: Joi.string().allow('', null),
       // Legacy fields (for backwards compatibility)
       unit: Joi.string().allow('', null),
       type: Joi.string().allow('', null),
@@ -60,10 +63,33 @@ const syncUploadSchema = Joi.object({
       updatedAt: Joi.string().allow('', null)
     })
   ).default([]),
+  groups: Joi.array().items(
+    Joi.object({
+      id: Joi.string().required(),
+      name: Joi.string().required(),
+      description: Joi.string().allow('', null),
+      icon: Joi.string().allow('', null),
+      color: Joi.string().allow('', null),
+      createdAt: Joi.string().allow('', null)
+    })
+  ).default([]),
+  tariffs: Joi.array().items(
+    Joi.object({
+      id: Joi.string().required(),
+      name: Joi.string().required(),
+      meterTypeId: Joi.string().allow('', null),
+      pricePerUnit: Joi.number().required(),
+      baseCharge: Joi.number().default(0),
+      validFrom: Joi.string().allow('', null),
+      validTo: Joi.string().allow('', null),
+      createdAt: Joi.string().allow('', null)
+    })
+  ).default([]),
   settings: Joi.object({
     storageMode: Joi.string().allow('', null),
     currency: Joi.string().allow('', null),
-    theme: Joi.string().allow('', null)
+    theme: Joi.string().allow('', null),
+    dashboardWidgets: Joi.array().items(Joi.any()).default([])
   }).default({}),
   lastModified: Joi.string().allow('', null),
   createdAt: Joi.string().allow('', null)
