@@ -1,3 +1,10 @@
+## [1.7.3](https://github.com/KallistoX/stathaus/compare/v1.7.2...v1.7.3) (2026-01-24)
+
+
+### Bug Fixes
+
+* Include groups/tariffs in cloud sync and fix NaN display ([a23f192](https://github.com/KallistoX/stathaus/commit/a23f1924f1b10bdd2ecb64fcf272b0c9448bd430))
+
 ## [1.7.2](https://github.com/KallistoX/stathaus/compare/v1.7.1...v1.7.2) (2026-01-24)
 
 

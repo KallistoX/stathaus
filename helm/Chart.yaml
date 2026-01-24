@@ -2,8 +2,8 @@ apiVersion: v2
 name: stathaus
 description: StatHaus - Meter Readings Management PWA
 type: application
-version: "1.7.2"
-appVersion: "1.7.2"
+version: "1.7.3"
+appVersion: "1.7.3"
 keywords:
   - pwa
   - meter-readings
