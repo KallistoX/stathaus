@@ -68,6 +68,8 @@ export default class CloudStorageAdapter extends StorageAdapter {
         meterTypes: cloudData.meterTypes || [],
         meters: cloudData.meters || [],
         readings: cloudData.readings || [],
+        groups: cloudData.groups || [],
+        tariffs: cloudData.tariffs || [],
         settings: {
           ...this._getEmptyData().settings,
           storageMode: 'cloud',
@@ -101,6 +103,8 @@ export default class CloudStorageAdapter extends StorageAdapter {
             meterTypes: data.meterTypes,
             meters: data.meters,
             readings: data.readings,
+            groups: data.groups || [],
+            tariffs: data.tariffs || [],
             settings: data.settings,
             lastModified: new Date().toISOString()
           })

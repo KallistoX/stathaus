@@ -298,12 +298,14 @@ const tariff = computed(() => {
 
 const consumption = computed(() => {
   if (!meter.value) return 0
-  return dataStore.calculateConsumption(meter.value.id)
+  const result = dataStore.calculateConsumption(meter.value.id)
+  return result?.consumption || 0
 })
 
 const totalCost = computed(() => {
   if (!meter.value) return 0
-  return dataStore.calculateCost(meter.value.id)
+  const result = dataStore.calculateCost(meter.value.id)
+  return result?.cost || 0
 })
 
 const monthlyBreakdown = computed(() => {
