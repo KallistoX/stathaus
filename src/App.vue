@@ -128,7 +128,7 @@
                 </span>
               </div>
               <button
-                @click="handleLogout; mobileMenuOpen = false"
+                @click="() => { handleLogout(); mobileMenuOpen = false }"
                 class="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 title="Abmelden"
               >
@@ -139,7 +139,7 @@
             </div>
             <button
               v-else
-              @click="handleLogin; mobileMenuOpen = false"
+              @click="() => { handleLogin(); mobileMenuOpen = false }"
               :disabled="authLoading"
               class="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-primary-600 dark:bg-primary-700 text-white rounded-lg hover:bg-primary-700 dark:hover:bg-primary-600 transition-colors disabled:opacity-50"
             >
