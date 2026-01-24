@@ -1,3 +1,10 @@
+## [1.9.2](https://github.com/KallistoX/stathaus/compare/v1.9.1...v1.9.2) (2026-01-24)
+
+
+### Bug Fixes
+
+* **auth:** Prevent token refresh race condition with promise deduplication ([1b97799](https://github.com/KallistoX/stathaus/commit/1b9779944958ec1a281c70094012d2547543bb17))
+
 ## [1.9.1](https://github.com/KallistoX/stathaus/compare/v1.9.0...v1.9.1) (2026-01-24)
 
 
